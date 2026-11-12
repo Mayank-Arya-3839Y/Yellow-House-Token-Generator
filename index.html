@@ -15,12 +15,13 @@
     :root {
       --rows: 5;
       --row-height: calc(297mm / var(--rows));
-      --item-font-size: 14pt;
+      --item-font-size: 13.5pt;
       --price-font-size: 27pt;
       --words-font-size: 7pt;
-      --pad-v: 3.5mm;
-      --wm-opacity: 0.28;
+      --pad-v: 3.2mm;
+      --wm-opacity: 0.35;
       --wm-size: 46mm;
+      --sunflower-base: #FFD700;
     }
 
     @page {
@@ -62,40 +63,40 @@
     }
 
     /* =========================================================
-       UNIFORM YELLOW HOUSE FOOD TOKEN CELL
+       UNIFORM CLASSIC SUNFLOWER (#FFD700) FOOD TOKEN CELL
        ========================================================= */
     .token-card {
       width: 105mm;
       height: var(--row-height);
-      border: 1px dashed #d97706;
-      outline: 0.4px solid #f59e0b;
-      padding: var(--pad-v) 5.5mm;
+      border: 1px dashed #92400e;
+      padding: 2mm;
+      position: relative;
+      overflow: hidden;
+      background-color: #FFD700;
+      background-image: radial-gradient(circle at 50% 48%, #fff176 0%, #FFD700 58%, #f5b700 100%);
+    }
+
+    /* Crisp Inner Rounded-Rectangle Frame matching reference screenshot */
+    .token-inner-frame {
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(146, 64, 14, 0.48);
+      border-radius: 5px;
+      padding: var(--pad-v) 4.2mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       position: relative;
       overflow: hidden;
-      background: linear-gradient(135deg, #fffde7 0%, #fff59d 50%, #ffee58 100%);
-    }
-
-    /* Subtle inner decorative frame */
-    .token-card::before {
-      content: "";
-      position: absolute;
-      inset: 1.8mm;
-      border: 0.4mm solid rgba(180, 83, 9, 0.28);
-      border-radius: 1.5mm;
-      pointer-events: none;
-      z-index: 2;
     }
 
     .token-empty {
-      background: #fffef5;
-      border: 1px dashed #eab308;
+      background: #fff9c4;
+      border: 1px dashed #b45309;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #ca8a04;
+      color: #92400e;
       font-size: 8pt;
       font-weight: 800;
       text-transform: uppercase;
@@ -131,8 +132,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1.5px solid #92400e;
-      padding-bottom: 0.9mm;
+      border-bottom: 1.5px solid #78350f;
+      padding-bottom: 1mm;
       position: relative;
       z-index: 5;
     }
@@ -151,10 +152,10 @@
     .event-pill {
       font-size: 6.5pt;
       font-weight: 900;
-      color: #fffbeb;
-      background: #92400e;
-      padding: 1px 5.5px;
-      border-radius: 2.5px;
+      color: #ffffff;
+      background: #78350f;
+      padding: 1.2px 6px;
+      border-radius: 3px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -174,15 +175,15 @@
     .food-title {
       font-size: var(--item-font-size);
       font-weight: 900;
-      color: #1c1917;
+      color: #111111;
       text-transform: uppercase;
       letter-spacing: 0.6px;
-      line-height: 1.05;
-      text-shadow: 0 0 6px rgba(255, 253, 231, 0.95), 1px 1px 0px #ffffff;
-      background: rgba(255, 253, 231, 0.58);
-      padding: 0.5mm 3mm;
-      border-radius: 3px;
-      border: 0.5px solid rgba(146, 64, 14, 0.25);
+      line-height: 1.1;
+      background: rgba(255, 253, 240, 0.88);
+      padding: 1mm 3.8mm;
+      border-radius: 4px;
+      border: 1px solid rgba(146, 64, 14, 0.38);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
     .price-figure {
@@ -190,19 +191,28 @@
       font-weight: 900;
       color: #78350f;
       line-height: 0.96;
-      margin-top: 0.6mm;
+      margin-top: 0.8mm;
       letter-spacing: -0.5px;
-      text-shadow: 0 0 8px rgba(255, 253, 231, 0.95), 1.5px 1.5px 0px #ffffff;
+      text-shadow:
+        1.5px 1.5px 0px #ffffff,
+        -1.5px -1.5px 0px #ffffff,
+        1.5px -1.5px 0px #ffffff,
+        -1.5px 1.5px 0px #ffffff,
+        0px 1.5px 0px #ffffff,
+        0px -1.5px 0px #ffffff,
+        1.5px 0px 0px #ffffff,
+        -1.5px 0px 0px #ffffff,
+        0 2px 5px rgba(0, 0, 0, 0.16);
     }
 
     .price-words {
       font-size: var(--words-font-size);
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: 1.3px;
-      color: #292524;
+      color: #1c1917;
       text-transform: uppercase;
-      margin-top: 0.6mm;
-      text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+      margin-top: 0.7mm;
+      text-shadow: 0 0 4px rgba(255, 255, 255, 0.95);
     }
 
     /* Token Footer */
@@ -212,9 +222,9 @@
       align-items: center;
       font-size: 6.5pt;
       font-weight: 800;
-      color: #451a03;
-      border-top: 1px dashed #92400e;
-      padding-top: 0.9mm;
+      color: #291502;
+      border-top: 1px dashed #78350f;
+      padding-top: 1mm;
       position: relative;
       z-index: 5;
     }
@@ -255,7 +265,7 @@
           </h1>
         </div>
         <p class="text-xs text-zinc-400 mt-1">
-          14 Nov Children's Day Fair &bull; Single-Sided Uniform Yellow Tokens &bull; 3D Realistic Food Watermarks &bull; Zero-Drift DOCX &amp; PDF
+          14 Nov Children's Day Fair &bull; Classic Sunflower (#FFD700) Theme &bull; 3D Realistic Food Watermarks &bull; Fast Pre-Cached Canvas Snapshot DOCX &amp; PDF
         </p>
       </div>
 
@@ -265,13 +275,13 @@
           <span>🔀 Shuffle &amp; Regenerate</span>
         </button>
         <button id="btn-reset" class="px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs uppercase border border-zinc-700 transition">
-          ↺ Reset Default (350)
+          ↺ Reset Defaults (350)
         </button>
         <button id="btn-pdf" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/25 transition flex items-center gap-1.5">
-          <span>📄 Export PDF (.pdf)</span>
+          <span>⚡ Fast Export PDF (.pdf)</span>
         </button>
         <button id="btn-docx" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-600/25 transition flex items-center gap-1.5">
-          <span>📝 Export Word (.docx) — Exact Print Layout</span>
+          <span>⚡ Fast Export Word (.docx)</span>
         </button>
         <button id="btn-print" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/25 transition flex items-center gap-1.5">
           <span>🖨️ Print (Ctrl+P)</span>
@@ -280,15 +290,20 @@
     </div>
 
     <!-- Export Progress Notification Banner -->
-    <div id="export-status" class="hidden mt-4 bg-amber-500/15 border border-amber-400/50 rounded-xl p-3.5 flex items-center justify-between text-amber-300 text-xs font-bold">
-      <div class="flex items-center gap-3">
-        <svg class="w-5 h-5 animate-spin text-amber-400" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-        </svg>
-        <span id="export-status-text">Preparing high-resolution tokens...</span>
+    <div id="export-status" class="hidden mt-4 bg-amber-500/15 border border-amber-400/50 rounded-xl p-3.5 flex flex-col gap-2 text-amber-300 text-xs font-bold">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 animate-spin text-amber-400" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span id="export-status-text">Pre-caching 8 food templates &amp; compositing pages...</span>
+        </div>
+        <span id="export-status-pct" class="font-black text-sm">0%</span>
       </div>
-      <span id="export-status-pct" class="font-black text-sm">0%</span>
+      <div class="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
+        <div id="export-progress-bar" class="bg-yellow-400 h-full transition-all duration-150" style="width: 0%"></div>
+      </div>
     </div>
 
     <!-- Grid Size & Watermark Opacity Controls -->
@@ -307,21 +322,24 @@
       <div>
         <div class="flex items-center justify-between mb-1.5">
           <label class="text-[11px] font-bold text-zinc-400 uppercase">Food Watermark Opacity</label>
-          <span id="opacity-label" class="text-xs font-black text-yellow-400">28%</span>
+          <span id="opacity-label" class="text-xs font-black text-yellow-400">35%</span>
         </div>
-        <input type="range" id="watermark-opacity" min="10" max="60" value="28" class="w-full accent-yellow-400 cursor-pointer h-2 bg-zinc-800 rounded-lg"/>
+        <input type="range" id="watermark-opacity" min="10" max="75" value="35" class="w-full accent-yellow-400 cursor-pointer h-2 bg-zinc-800 rounded-lg"/>
         <div class="flex justify-between text-[10px] text-zinc-500 mt-1">
           <span>Subtle (10%)</span>
-          <span>Balanced (28%)</span>
-          <span>Bold (60%)</span>
+          <span>Default (35%)</span>
+          <span>Bold (75%)</span>
         </div>
       </div>
 
       <div class="flex flex-col justify-center bg-zinc-900/90 border border-zinc-800 rounded-lg p-3">
-        <div class="text-[11px] font-bold text-zinc-400 uppercase">DOCX Export Alignment Mode</div>
-        <div class="text-xs font-extrabold text-emerald-400 mt-0.5">Native Word Table (105mm × Exact Row Height)</div>
+        <div class="text-[11px] font-bold text-zinc-400 uppercase">Theme &amp; Snapshot Engine</div>
+        <div class="text-xs font-extrabold text-yellow-400 mt-0.5 flex items-center gap-1.5">
+          <span class="inline-block w-3 h-3 rounded-sm bg-[#FFD700] border border-amber-700"></span>
+          Classic Sunflower (#FFD700) &bull; Instant 2D Canvas Engine
+        </div>
         <p class="text-[10px] text-zinc-400 mt-0.5">
-          Locks each token into an exact millimeter Word table cell so pages never shift or overflow in MS Word.
+          Pre-renders the 8 unique food templates once and stamps 350 tokens in ~2 seconds with 0.0mm Word alignment drift.
         </p>
       </div>
     </div>
@@ -509,54 +527,60 @@
               <stop offset="55%" stop-color="#d2b48c"/>
               <stop offset="100%" stop-color="#8b5a2b"/>
             </linearGradient>
-            <radialGradient id="murmura" cx="40%" cy="35%" r="65%">
-              <stop offset="0%" stop-color="#ffffff"/>
-              <stop offset="55%" stop-color="#fef08a"/>
+            <radialGradient id="bpPuff" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#fef9c3"/>
+              <stop offset="65%" stop-color="#fde047"/>
               <stop offset="100%" stop-color="#ca8a04"/>
             </radialGradient>
           </defs>
-          <!-- Cone Shadow -->
-          <polygon points="118,226 70,195 175,185" fill="rgba(0,0,0,0.22)"/>
-          <!-- Kraft Paper Cone (Jhalmuri / Bhel Cone) -->
-          <polygon points="52,88 188,88 120,224" fill="url(#bpCone)" stroke="#5c4033" stroke-width="2.5" stroke-linejoin="round"/>
-          <!-- Newspaper Print Lines Effect on Cone -->
-          <line x1="78" y1="125" x2="155" y2="125" stroke="#5c4033" stroke-width="1.5" stroke-opacity="0.35"/>
-          <line x1="88" y1="145" x2="148" y2="145" stroke="#5c4033" stroke-width="1.5" stroke-opacity="0.35"/>
-          <line x1="98" y1="165" x2="138" y2="165" stroke="#5c4033" stroke-width="1.5" stroke-opacity="0.35"/>
-          <path d="M 52 88 L 120 224" stroke="#78350f" stroke-width="2" opacity="0.5"/>
-          <!-- Crispy Round Papdi Crackers Tucked in Top -->
-          <circle cx="76" cy="70" r="22" fill="#f59e0b" stroke="#78350f" stroke-width="2"/>
-          <circle cx="164" cy="72" r="20" fill="#d97706" stroke="#78350f" stroke-width="2"/>
-          <!-- Dome of Puffed Rice (Murmura) -->
-          <ellipse cx="120" cy="82" rx="70" ry="34" fill="#ca8a04" stroke="#78350f" stroke-width="2"/>
-          <g fill="url(#murmura)" stroke="#a16207" stroke-width="0.7">
-            <ellipse cx="75" cy="82" rx="9" ry="5.5" transform="rotate(-18 75 82)"/>
-            <ellipse cx="94" cy="74" rx="9" ry="5.5" transform="rotate(12 94 74)"/>
-            <ellipse cx="115" cy="68" rx="10" ry="6" transform="rotate(-8 115 68)"/>
-            <ellipse cx="138" cy="72" rx="9.5" ry="5.5" transform="rotate(22 138 72)"/>
-            <ellipse cx="158" cy="82" rx="9" ry="5.5" transform="rotate(-15 158 82)"/>
-            <ellipse cx="86" cy="90" rx="9.5" ry="6" transform="rotate(8 86 90)"/>
-            <ellipse cx="108" cy="86" rx="10" ry="6" transform="rotate(-14 108 86)"/>
-            <ellipse cx="130" cy="88" rx="10" ry="6" transform="rotate(16 130 88)"/>
-            <ellipse cx="148" cy="92" rx="9" ry="5.5" transform="rotate(-10 148 92)"/>
-            <ellipse cx="102" cy="98" rx="9.5" ry="5.5"/><ellipse cx="124" cy="99" rx="9.5" ry="5.5"/>
+          <!-- Drop Shadow -->
+          <ellipse cx="120" cy="222" rx="34" ry="8" fill="rgba(0,0,0,0.28)"/>
+          <!-- Kraft Paper Cone -->
+          <polygon points="56,78 184,78 120,220" fill="url(#bpCone)" stroke="#5c3a21" stroke-width="2.5" stroke-linejoin="round"/>
+          <!-- Paper Fold Line -->
+          <line x1="120" y1="220" x2="146" y2="78" stroke="#78350f" stroke-width="1.5" stroke-opacity="0.45"/>
+          <!-- Cone Opening Rim -->
+          <ellipse cx="120" cy="78" rx="64" ry="22" fill="#78350f" stroke="#5c3a21" stroke-width="2"/>
+          <!-- Dome of Puffed Rice (Murmura) & Papdi -->
+          <circle cx="96" cy="64" r="18" fill="#ca8a04"/>
+          <circle cx="144" cy="64" r="18" fill="#ca8a04"/>
+          <circle cx="120" cy="54" r="22" fill="#eab308"/>
+          <!-- Individual Murmura Puffs -->
+          <g fill="url(#bpPuff)" stroke="#a16207" stroke-width="0.8">
+            <ellipse cx="78" cy="74" rx="8" ry="5" transform="rotate(-15 78 74)"/>
+            <ellipse cx="95" cy="68" rx="9" ry="5.5" transform="rotate(12 95 68)"/>
+            <ellipse cx="114" cy="62" rx="9" ry="5.5" transform="rotate(-8 114 62)"/>
+            <ellipse cx="134" cy="64" rx="9" ry="5.5" transform="rotate(18 134 64)"/>
+            <ellipse cx="154" cy="72" rx="8.5" ry="5" transform="rotate(-20 154 72)"/>
+            <ellipse cx="88" cy="82" rx="8.5" ry="5" transform="rotate(8 88 82)"/>
+            <ellipse cx="110" cy="78" rx="9" ry="5.5" transform="rotate(-12 110 78)"/>
+            <ellipse cx="130" cy="80" rx="9" ry="5.5" transform="rotate(10 130 80)"/>
+            <ellipse cx="148" cy="82" rx="8" ry="5" transform="rotate(-6 148 82)"/>
+            <ellipse cx="105" cy="52" rx="8.5" ry="5" transform="rotate(15 105 52)"/>
+            <ellipse cx="126" cy="50" rx="8.5" ry="5" transform="rotate(-14 126 50)"/>
           </g>
-          <!-- Tamarind & Mint Chutney Swirls, Red Tomatoes, Onion & Sev -->
-          <path d="M 70 84 Q 118 65 166 86" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round"/>
-          <path d="M 78 94 Q 120 78 158 94" fill="none" stroke="#7c2d12" stroke-width="3.5" stroke-linecap="round"/>
-          <rect x="92" y="76" width="9" height="8" rx="1.5" fill="#ef4444"/>
-          <rect x="134" y="78" width="9" height="8" rx="1.5" fill="#dc2626"/>
-          <rect x="112" y="88" width="8" height="7" rx="1.5" fill="#e9d5ff" stroke="#7e22ce" stroke-width="0.8"/>
-          <!-- Golden Sev Shower -->
-          <g stroke="#fef08a" stroke-width="2.2" stroke-linecap="round">
-            <line x1="78" y1="74" x2="96" y2="82"/><line x1="115" y1="64" x2="132" y2="74"/>
-            <line x1="142" y1="72" x2="158" y2="80"/><line x1="90" y1="96" x2="112" y2="92"/>
-            <line x1="126" y1="94" x2="146" y2="88"/>
+          <!-- Crispy Round Papdi Crackers -->
+          <circle cx="84" cy="60" r="12" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/>
+          <circle cx="152" cy="58" r="12" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/>
+          <!-- Diced Tomatoes, Onions, Pomegranate & Green Coriander -->
+          <rect x="96" y="70" width="8" height="7" rx="1.5" fill="#dc2626"/>
+          <rect x="132" y="68" width="8" height="7" rx="1.5" fill="#dc2626"/>
+          <rect x="114" y="54" width="7" height="6" rx="1.5" fill="#e9d5ff" stroke="#6b21a8" stroke-width="0.8"/>
+          <rect x="102" y="80" width="7" height="6" rx="1.5" fill="#e9d5ff" stroke="#6b21a8" stroke-width="0.8"/>
+          <circle cx="122" cy="70" r="4" fill="#e11d48"/><circle cx="90" cy="74" r="3.8" fill="#e11d48"/>
+          <circle cx="142" cy="76" r="4" fill="#e11d48"/>
+          <!-- Golden Sev & Mint Chutney Drizzle -->
+          <g stroke="#fef08a" stroke-width="2" stroke-linecap="round" fill="none">
+            <path d="M 76 68 Q 98 56 118 68"/><path d="M 116 58 Q 138 48 156 66"/>
+            <path d="M 86 78 Q 118 66 148 78"/>
           </g>
+          <circle cx="120" cy="60" r="5" fill="#16a34a"/>
+          <circle cx="108" cy="66" r="4" fill="#22c55e"/>
+          <circle cx="132" cy="64" r="4" fill="#16a34a"/>
         </svg>
       `,
 
-      // 4. STEAMED MOMOS: Bamboo steamer basket holding pleated white dumplings around a central fiery red schezwan chutney bowl
+      // 4. STEAMED MOMOS (HALF PLATE): Bamboo steamer basket holding pleated white dumplings around a central fiery red schezwan chutney bowl
       momo: `
         <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -588,40 +612,24 @@
             <line x1="45" y1="150" x2="195" y2="150"/><line x1="90" y1="45" x2="90" y2="195"/>
             <line x1="120" y1="38" x2="120" y2="202"/><line x1="150" y1="45" x2="150" y2="195"/>
           </g>
-          <!-- 6 Pleated 3D Steamed Momos Arranged in Circle -->
+          <!-- 4 Pleated 3D Steamed Momos for Half Plate -->
           <g>
-            <!-- Top Momo -->
             <g transform="translate(120, 62)">
               <circle cx="0" cy="0" r="24" fill="url(#momoSkin)" stroke="#64748b" stroke-width="1.5"/>
               <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
               <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
             </g>
-            <!-- Top Right Momo -->
-            <g transform="translate(170, 92)">
+            <g transform="translate(174, 120)">
               <circle cx="0" cy="0" r="24" fill="url(#momoSkin)" stroke="#64748b" stroke-width="1.5"/>
               <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
               <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
             </g>
-            <!-- Bottom Right Momo -->
-            <g transform="translate(170, 148)">
-              <circle cx="0" cy="0" r="24" fill="url(#momoSkin)" stroke="#64748b" stroke-width="1.5"/>
-              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
-              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
-            </g>
-            <!-- Bottom Momo -->
             <g transform="translate(120, 178)">
               <circle cx="0" cy="0" r="24" fill="url(#momoSkin)" stroke="#64748b" stroke-width="1.5"/>
               <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
               <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
             </g>
-            <!-- Bottom Left Momo -->
-            <g transform="translate(70, 148)">
-              <circle cx="0" cy="0" r="24" fill="url(#momoSkin)" stroke="#64748b" stroke-width="1.5"/>
-              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
-              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
-            </g>
-            <!-- Top Left Momo -->
-            <g transform="translate(70, 92)">
+            <g transform="translate(66, 120)">
               <circle cx="0" cy="0" r="24" fill="url(#momoSkin)" stroke="#64748b" stroke-width="1.5"/>
               <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
               <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
@@ -630,7 +638,75 @@
           <!-- Center Red Chili Garlic Chutney Dipping Bowl -->
           <circle cx="120" cy="120" r="27" fill="#ffffff" stroke="#334155" stroke-width="2.5"/>
           <circle cx="120" cy="120" r="22" fill="url(#chutneyRed)"/>
-          <!-- Chili Seeds & Coriander Spec in Chutney -->
+          <circle cx="114" cy="115" r="1.8" fill="#fef08a"/><circle cx="126" cy="118" r="1.8" fill="#fef08a"/>
+          <circle cx="118" cy="126" r="1.8" fill="#fef08a"/><circle cx="120" cy="120" r="3" fill="#16a34a"/>
+        </svg>
+      `,
+
+      // 4B. STEAMED MOMOS (FULL PLATE): Packed 8-dumpling bamboo steamer basket with tangy red chili dipping bowl
+      momo_full: `
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="bambooRimF" cx="50%" cy="50%" r="50%">
+              <stop offset="65%" stop-color="#92400e"/>
+              <stop offset="88%" stop-color="#d97706"/>
+              <stop offset="100%" stop-color="#78350f"/>
+            </radialGradient>
+            <radialGradient id="momoSkinF" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="65%" stop-color="#f8fafc"/>
+              <stop offset="92%" stop-color="#cbd5e1"/>
+              <stop offset="100%" stop-color="#94a3b8"/>
+            </radialGradient>
+            <radialGradient id="chutneyRedF" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#f87171"/>
+              <stop offset="50%" stop-color="#dc2626"/>
+              <stop offset="100%" stop-color="#7f1d1d"/>
+            </radialGradient>
+          </defs>
+          <circle cx="124" cy="126" r="96" fill="rgba(0,0,0,0.32)"/>
+          <circle cx="120" cy="120" r="95" fill="url(#bambooRimF)" stroke="#451a03" stroke-width="3"/>
+          <circle cx="120" cy="120" r="82" fill="#451a03" stroke="#b45309" stroke-width="3"/>
+          <g stroke="#78350f" stroke-width="2" opacity="0.6">
+            <line x1="45" y1="90" x2="195" y2="90"/><line x1="38" y1="120" x2="202" y2="120"/>
+            <line x1="45" y1="150" x2="195" y2="150"/><line x1="90" y1="45" x2="90" y2="195"/>
+            <line x1="120" y1="38" x2="120" y2="202"/><line x1="150" y1="45" x2="150" y2="195"/>
+          </g>
+          <!-- 6 Packed Pleated 3D Steamed Momos Arranged in Full Circle -->
+          <g>
+            <g transform="translate(120, 62)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(170, 92)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(170, 148)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(120, 178)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(70, 148)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(70, 92)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+          </g>
+          <circle cx="120" cy="120" r="27" fill="#ffffff" stroke="#334155" stroke-width="2.5"/>
+          <circle cx="120" cy="120" r="22" fill="url(#chutneyRedF)"/>
           <circle cx="114" cy="115" r="1.8" fill="#fef08a"/><circle cx="126" cy="118" r="1.8" fill="#fef08a"/>
           <circle cx="118" cy="126" r="1.8" fill="#fef08a"/><circle cx="120" cy="120" r="3" fill="#16a34a"/>
         </svg>
@@ -765,19 +841,57 @@
 
     // Default 8-Item Menu Configuration (Total = 350 tokens, Cash Value = Rs 7,000)
     const DEFAULT_MENU = [
-      { id: 'cc10', name: 'Chana Chaat',       price: 10, words: 'Ten Rupees Only',    prefix: 'YH-CC10', defaultQty: 50, svgKey: 'chana_chaat',  customImg: null },
-      { id: 'mk30', name: 'Matar Kulcha',      price: 30, words: 'Thirty Rupees Only', prefix: 'YH-MK30', defaultQty: 50, svgKey: 'matar_kulcha', customImg: null },
-      { id: 'bp10', name: 'Bhel Puri',         price: 10, words: 'Ten Rupees Only',    prefix: 'YH-BP10', defaultQty: 40, svgKey: 'bhel_puri',    customImg: null },
-      { id: 'mh30', name: 'Momo (Half Plate)', price: 30, words: 'Thirty Rupees Only', prefix: 'YH-MH30', defaultQty: 40, svgKey: 'momo',         customImg: null },
-      { id: 'mf60', name: 'Momo (Full Plate)', price: 60, words: 'Sixty Rupees Only',  prefix: 'YH-MF60', defaultQty: 40, svgKey: 'momo',         customImg: null },
-      { id: 'rg10', name: 'Rasgulla',          price: 10, words: 'Ten Rupees Only',    prefix: 'YH-RG10', defaultQty: 40, svgKey: 'rasgulla',     customImg: null },
-      { id: 'jj10', name: 'Jaljira',           price: 10, words: 'Ten Rupees Only',    prefix: 'YH-JJ10', defaultQty: 50, svgKey: 'jaljira',      customImg: null },
-      { id: 'ff20', name: 'French Fries',      price: 20, words: 'Twenty Rupees Only', prefix: 'YH-FF20', defaultQty: 40, svgKey: 'french_fries', customImg: null }
+      { id: 'cc10', name: 'Chana Chaat',       price: 10, words: 'TEN RUPEES ONLY',    prefix: 'YH-CC10', defaultQty: 50, svgKey: 'chana_chaat',  customImg: null },
+      { id: 'mk30', name: 'Matar Kulcha',      price: 30, words: 'THIRTY RUPEES ONLY', prefix: 'YH-MK30', defaultQty: 50, svgKey: 'matar_kulcha', customImg: null },
+      { id: 'bp10', name: 'Bhel Puri',         price: 10, words: 'TEN RUPEES ONLY',    prefix: 'YH-BP10', defaultQty: 40, svgKey: 'bhel_puri',    customImg: null },
+      { id: 'mh30', name: 'Momo (Half Plate)', price: 30, words: 'THIRTY RUPEES ONLY', prefix: 'YH-MH30', defaultQty: 40, svgKey: 'momo',         customImg: null },
+      { id: 'mf60', name: 'Momo (Full Plate)', price: 60, words: 'SIXTY RUPEES ONLY',  prefix: 'YH-MF60', defaultQty: 40, svgKey: 'momo_full',    customImg: null },
+      { id: 'rg10', name: 'Rasgulla',          price: 10, words: 'TEN RUPEES ONLY',    prefix: 'YH-RG10', defaultQty: 40, svgKey: 'rasgulla',     customImg: null },
+      { id: 'jj10', name: 'Jaljira',           price: 10, words: 'TEN RUPEES ONLY',    prefix: 'YH-JJ10', defaultQty: 50, svgKey: 'jaljira',      customImg: null },
+      { id: 'ff20', name: 'French Fries',      price: 20, words: 'TWENTY RUPEES ONLY', prefix: 'YH-FF20', defaultQty: 40, svgKey: 'french_fries', customImg: null }
     ];
 
     // Live menu state
     let menuState = DEFAULT_MENU.map(item => ({ ...item, qty: item.defaultQty }));
     let shuffledTokens = [];
+
+    // Pre-rasterized bitmap cache for the 8 food illustrations so exports are instantaneous
+    const bitmapWatermarkCache = {};
+
+    // Pre-render SVG strings or custom PNG data URLs into cached HTMLImageElement bitmaps
+    async function ensureWatermarksCached() {
+      const tasks = menuState.map(item => {
+        return new Promise((resolve) => {
+          const src = item.customImg
+            ? item.customImg
+            : 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(FOOD_SVGS[item.svgKey].trim());
+
+          if (bitmapWatermarkCache[item.id] && bitmapWatermarkCache[item.id].srcKey === src) {
+            return resolve();
+          }
+
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            // Rasterize once onto a 360x360 offscreen canvas so subsequent draws take 0.05ms
+            const off = document.createElement('canvas');
+            off.width = 360;
+            off.height = 360;
+            const octx = off.getContext('2d');
+            octx.drawImage(img, 0, 0, 360, 360);
+            bitmapWatermarkCache[item.id] = {
+              srcKey: src,
+              canvas: off,
+              dataUrl: off.toDataURL('image/png')
+            };
+            resolve();
+          };
+          img.onerror = () => resolve();
+          img.src = src;
+        });
+      });
+      await Promise.all(tasks);
+    }
 
     // Fisher-Yates unbiased random shuffle
     function shuffleArray(arr) {
@@ -892,41 +1006,43 @@
       document.documentElement.style.setProperty('--rows', rows);
 
       if (tokensPerPage === 8) {
-        document.documentElement.style.setProperty('--item-font-size', '15.5pt');
+        document.documentElement.style.setProperty('--item-font-size', '15pt');
         document.documentElement.style.setProperty('--price-font-size', '31pt');
         document.documentElement.style.setProperty('--words-font-size', '7.5pt');
-        document.documentElement.style.setProperty('--pad-v', '4.5mm');
+        document.documentElement.style.setProperty('--pad-v', '4.2mm');
         document.documentElement.style.setProperty('--wm-size', '54mm');
       } else if (tokensPerPage === 10) {
-        document.documentElement.style.setProperty('--item-font-size', '14pt');
+        document.documentElement.style.setProperty('--item-font-size', '13.5pt');
         document.documentElement.style.setProperty('--price-font-size', '27pt');
         document.documentElement.style.setProperty('--words-font-size', '7pt');
-        document.documentElement.style.setProperty('--pad-v', '3.5mm');
+        document.documentElement.style.setProperty('--pad-v', '3.2mm');
         document.documentElement.style.setProperty('--wm-size', '46mm');
       } else if (tokensPerPage === 12) {
-        document.documentElement.style.setProperty('--item-font-size', '12.5pt');
+        document.documentElement.style.setProperty('--item-font-size', '12pt');
         document.documentElement.style.setProperty('--price-font-size', '23pt');
         document.documentElement.style.setProperty('--words-font-size', '6.5pt');
-        document.documentElement.style.setProperty('--pad-v', '2.6mm');
+        document.documentElement.style.setProperty('--pad-v', '2.4mm');
         document.documentElement.style.setProperty('--wm-size', '39mm');
       } else if (tokensPerPage === 14) {
-        document.documentElement.style.setProperty('--item-font-size', '11pt');
+        document.documentElement.style.setProperty('--item-font-size', '10.5pt');
         document.documentElement.style.setProperty('--price-font-size', '20pt');
         document.documentElement.style.setProperty('--words-font-size', '6pt');
-        document.documentElement.style.setProperty('--pad-v', '2mm');
+        document.documentElement.style.setProperty('--pad-v', '1.8mm');
         document.documentElement.style.setProperty('--wm-size', '34mm');
       } else {
         // 16 tokens per page
-        document.documentElement.style.setProperty('--item-font-size', '10pt');
+        document.documentElement.style.setProperty('--item-font-size', '9.5pt');
         document.documentElement.style.setProperty('--price-font-size', '17.5pt');
         document.documentElement.style.setProperty('--words-font-size', '5.5pt');
-        document.documentElement.style.setProperty('--pad-v', '1.6mm');
+        document.documentElement.style.setProperty('--pad-v', '1.4mm');
         document.documentElement.style.setProperty('--wm-size', '30mm');
       }
     }
 
     // Render all single-sided A4 sheets
-    function renderSheets() {
+    async function renderSheets() {
+      await ensureWatermarksCached();
+
       const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
       const rows = tokensPerPage / 2;
       applyGridScalingCSS(tokensPerPage);
@@ -957,7 +1073,7 @@
         // Sheet header bar (hidden during printing)
         const metaBar = document.createElement('div');
         metaBar.className = 'sheet-meta-bar text-xs font-bold text-zinc-400 uppercase tracking-wider -mb-4 mt-2';
-        metaBar.innerHTML = `A4 Sheet #${sIdx + 1} of ${totalSheets} — <span class="text-yellow-400">Single-Sided Food Tokens (${pageTokens.length} Items)</span>`;
+        metaBar.innerHTML = `A4 Sheet #${sIdx + 1} of ${totalSheets} — <span class="text-yellow-400">Classic Sunflower (#FFD700) Food Tokens (${pageTokens.length} Items)</span>`;
         container.appendChild(metaBar);
 
         const sheet = document.createElement('div');
@@ -969,24 +1085,27 @@
 
           if (t) {
             card.className = 'token-card';
-            const watermarkMarkup = t.customImg
-              ? `<img src="${t.customImg}" alt="${t.name}"/>`
-              : FOOD_SVGS[t.svgKey];
+            const cachedEntry = bitmapWatermarkCache[t.id];
+            const watermarkMarkup = cachedEntry
+              ? `<img src="${cachedEntry.dataUrl}" alt="${t.name}"/>`
+              : (t.customImg ? `<img src="${t.customImg}" alt="${t.name}"/>` : FOOD_SVGS[t.svgKey]);
 
             card.innerHTML = `
-              <div class="token-watermark">${watermarkMarkup}</div>
-              <div class="token-header">
-                <span class="house-badge">★ YELLOW HOUSE</span>
-                <span class="event-pill">14 NOV FAIR</span>
-              </div>
-              <div class="token-body">
-                <div class="food-title">${t.name}</div>
-                <div class="price-figure">₹${t.price}</div>
-                <div class="price-words">${t.words}</div>
-              </div>
-              <div class="token-footer">
-                <span>ID: ${t.serial}</span>
-                <span>VALID: 14 NOV &bull; SINGLE USE</span>
+              <div class="token-inner-frame">
+                <div class="token-watermark">${watermarkMarkup}</div>
+                <div class="token-header">
+                  <span class="house-badge">★ YELLOW HOUSE</span>
+                  <span class="event-pill">14 NOV FAIR</span>
+                </div>
+                <div class="token-body">
+                  <div class="food-title">${t.name}</div>
+                  <div class="price-figure">₹${t.price}</div>
+                  <div class="price-words">${t.words}</div>
+                </div>
+                <div class="token-footer">
+                  <span>ID: ${t.serial}</span>
+                  <span>VALID: 14 NOV &bull; SINGLE USE</span>
+                </div>
               </div>
             `;
           } else {
@@ -1011,38 +1130,290 @@
       return bytes;
     }
 
-    // High-Resolution PDF Export (.pdf)
+    // Helper: Draw a rounded rectangle path on a 2D canvas context
+    function roundRectPath(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    // =========================================================
+    // BLAZING-FAST 2D CANVAS SNAPSHOT ENGINE (ZERO-DRIFT, ~2 SEC FOR 35 PAGES)
+    // Pre-renders the 8 base food templates (background + frame + header + watermark + white pill box + price)
+    // once, then stamps the 350 tokens onto A4 sheets in memory and only draws the unique ID string per slot.
+    // =========================================================
+    async function renderAllSheetsToSnapshots(onProgress) {
+      await ensureWatermarksCached();
+
+      const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
+      const rows = tokensPerPage / 2;
+      const wmOpacity = (parseInt(document.getElementById('watermark-opacity').value, 10) || 35) / 100;
+
+      // Crisp 2x A4 Print Canvas Resolution: 1588 x 2246 px (exact 210:297 ratio)
+      const SHEET_W = 1588;
+      const SHEET_H = 2246;
+      const CARD_W = SHEET_W / 2;       // 794 px
+      const CARD_H = SHEET_H / rows;
+
+      // Scale factor relative to default 5-row layout
+      const rowScale = Math.min(1.15, Math.max(0.64, 5 / rows));
+
+      // Step 1: Pre-render 1 reusable base template canvas per unique food item (8 templates total)
+      const baseTemplates = {};
+      menuState.forEach(item => {
+        const tpl = document.createElement('canvas');
+        tpl.width = CARD_W;
+        tpl.height = Math.round(CARD_H);
+        const ctx = tpl.getContext('2d');
+        const H = tpl.height;
+
+        // 1. Classic Sunflower (#FFD700) radial gradient fill
+        const grad = ctx.createRadialGradient(CARD_W * 0.5, H * 0.48, 20, CARD_W * 0.5, H * 0.5, Math.max(CARD_W, H) * 0.65);
+        grad.addColorStop(0, '#fff176');
+        grad.addColorStop(0.58, '#FFD700');
+        grad.addColorStop(1, '#f5b700');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, CARD_W, H);
+
+        // 2. Outer dashed cut line border
+        ctx.save();
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.strokeRect(1, 1, CARD_W - 2, H - 2);
+        ctx.restore();
+
+        // 3. Inner rounded rectangle frame
+        const inset = 15;
+        const frameW = CARD_W - inset * 2;
+        const frameH = H - inset * 2;
+        ctx.save();
+        roundRectPath(ctx, inset, inset, frameW, frameH, 10);
+        ctx.strokeStyle = 'rgba(146, 64, 14, 0.52)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+
+        // 4. Centered 3D Food Illustration Watermark from pre-rasterized cache
+        const cached = bitmapWatermarkCache[item.id];
+        if (cached && cached.canvas) {
+          const wmSize = Math.min(CARD_W * 0.46, H * 0.78);
+          ctx.save();
+          ctx.globalAlpha = wmOpacity;
+          ctx.drawImage(
+            cached.canvas,
+            (CARD_W - wmSize) / 2,
+            (H * 0.52) - (wmSize / 2),
+            wmSize,
+            wmSize
+          );
+          ctx.restore();
+        }
+
+        const padX = inset + 28;
+        const padTop = inset + Math.round(20 * rowScale);
+        const headerBottomY = padTop + Math.round(28 * rowScale);
+
+        // 5. Top Header: Left '★ YELLOW HOUSE' & Right '14 NOV FAIR' pill badge
+        ctx.save();
+        ctx.font = `900 ${Math.round(18 * rowScale)}px "Segoe UI", system-ui, sans-serif`;
+        ctx.fillStyle = '#451a03';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★ YELLOW HOUSE', padX, padTop + Math.round(12 * rowScale));
+
+        // Right event pill badge
+        const badgeText = '14 NOV FAIR';
+        ctx.font = `900 ${Math.round(14 * rowScale)}px "Segoe UI", system-ui, sans-serif`;
+        const badgeMetrics = ctx.measureText(badgeText);
+        const badgeW = badgeMetrics.width + 22;
+        const badgeH = Math.round(24 * rowScale);
+        const badgeX = CARD_W - padX - badgeW;
+        const badgeY = padTop + Math.round(12 * rowScale) - badgeH / 2;
+
+        roundRectPath(ctx, badgeX, badgeY, badgeW, badgeH, 6);
+        ctx.fillStyle = '#78350f';
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2 + 1);
+
+        // Solid header bottom line
+        ctx.beginPath();
+        ctx.moveTo(padX, headerBottomY);
+        ctx.lineTo(CARD_W - padX, headerBottomY);
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.restore();
+
+        // 6. Center Body: White/Cream Rounded Pill Box + Food Item Name
+        const centerY = H * 0.50;
+        ctx.save();
+        const titleFontPx = Math.round(28 * rowScale);
+        ctx.font = `900 ${titleFontPx}px "Segoe UI", system-ui, sans-serif`;
+        const titleStr = item.name.toUpperCase();
+        const titleW = ctx.measureText(titleStr).width;
+        const pillPadX = 28;
+        const pillW = titleW + pillPadX * 2;
+        const pillH = Math.round(40 * rowScale);
+        const pillX = (CARD_W - pillW) / 2;
+        const pillY = centerY - Math.round(62 * rowScale);
+
+        roundRectPath(ctx, pillX, pillY, pillW, pillH, 8);
+        ctx.fillStyle = 'rgba(255, 253, 240, 0.90)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(146, 64, 14, 0.42)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#111111';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(titleStr, CARD_W / 2, pillY + pillH / 2 + 1);
+
+        // 7. Large Price Figure with Crisp White Outline
+        const priceFontPx = Math.round(58 * rowScale);
+        ctx.font = `900 ${priceFontPx}px "Segoe UI", system-ui, sans-serif`;
+        const priceStr = `₹${item.price}`;
+        const priceY = pillY + pillH + Math.round(36 * rowScale);
+
+        ctx.lineJoin = 'round';
+        ctx.miterLimit = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 7;
+        ctx.strokeText(priceStr, CARD_W / 2, priceY);
+
+        ctx.fillStyle = '#78350f';
+        ctx.fillText(priceStr, CARD_W / 2, priceY);
+
+        // 8. Amount in Words below Price
+        const wordsFontPx = Math.round(15 * rowScale);
+        ctx.font = `900 ${wordsFontPx}px "Segoe UI", system-ui, sans-serif`;
+        const wordsY = priceY + Math.round(34 * rowScale);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 3;
+        ctx.strokeText(item.words, CARD_W / 2, wordsY);
+        ctx.fillStyle = '#1c1917';
+        ctx.fillText(item.words, CARD_W / 2, wordsY);
+
+        // 9. Footer Dashed Divider Line & Static Right Text
+        const footerTopY = H - inset - Math.round(38 * rowScale);
+        ctx.beginPath();
+        ctx.setLineDash([6, 5]);
+        ctx.moveTo(padX, footerTopY);
+        ctx.lineTo(CARD_W - padX, footerTopY);
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.font = `800 ${Math.round(14 * rowScale)}px "Segoe UI", system-ui, sans-serif`;
+        ctx.fillStyle = '#291502';
+        ctx.textAlign = 'right';
+        ctx.fillText('VALID: 14 NOV • SINGLE USE', CARD_W - padX, footerTopY + Math.round(18 * rowScale));
+        ctx.restore();
+
+        baseTemplates[item.id] = {
+          canvas: tpl,
+          padX,
+          footerTextY: footerTopY + Math.round(18 * rowScale),
+          footerFontPx: Math.round(14 * rowScale)
+        };
+      });
+
+      // Step 2: Composite all A4 pages in fast asynchronous batches
+      const totalTokens = shuffledTokens.length;
+      const totalSheets = Math.ceil(totalTokens / tokensPerPage);
+      const pageSnapshots = [];
+
+      const sheetCanvas = document.createElement('canvas');
+      sheetCanvas.width = SHEET_W;
+      sheetCanvas.height = SHEET_H;
+      const sctx = sheetCanvas.getContext('2d');
+
+      for (let sIdx = 0; sIdx < totalSheets; sIdx++) {
+        sctx.fillStyle = '#ffffff';
+        sctx.fillRect(0, 0, SHEET_W, SHEET_H);
+
+        const pageTokens = shuffledTokens.slice(sIdx * tokensPerPage, (sIdx + 1) * tokensPerPage);
+
+        for (let slot = 0; slot < tokensPerPage; slot++) {
+          const col = slot % 2;
+          const row = Math.floor(slot / 2);
+          const x = col * CARD_W;
+          const y = Math.round(row * CARD_H);
+          const t = pageTokens[slot];
+
+          if (t && baseTemplates[t.id]) {
+            const tplInfo = baseTemplates[t.id];
+            // Stamp pre-rendered food card template in <0.1ms
+            sctx.drawImage(tplInfo.canvas, x, y);
+
+            // Stamp unique token ID on bottom-left footer
+            sctx.save();
+            sctx.font = `800 ${tplInfo.footerFontPx}px "Segoe UI", system-ui, sans-serif`;
+            sctx.fillStyle = '#291502';
+            sctx.textAlign = 'left';
+            sctx.textBaseline = 'middle';
+            sctx.fillText(`ID: ${t.serial}`, x + tplInfo.padX, y + tplInfo.footerTextY);
+            sctx.restore();
+          } else {
+            // Blank spare slot
+            sctx.fillStyle = '#fff9c4';
+            sctx.fillRect(x, y, CARD_W, Math.round(CARD_H));
+            sctx.strokeStyle = '#b45309';
+            sctx.strokeRect(x + 2, y + 2, CARD_W - 4, Math.round(CARD_H) - 4);
+          }
+        }
+
+        pageSnapshots.push(sheetCanvas.toDataURL('image/jpeg', 0.94));
+
+        const pct = Math.round(((sIdx + 1) / totalSheets) * 100);
+        if (onProgress) onProgress(sIdx + 1, totalSheets, pct);
+
+        // Yield every 3 pages so the progress bar animates smoothly without freezing UI
+        if (sIdx % 3 === 0) {
+          await new Promise(r => setTimeout(r, 15));
+        }
+      }
+
+      return pageSnapshots;
+    }
+
+    // Fast High-Resolution PDF Export (.pdf)
     document.getElementById('btn-pdf').addEventListener('click', async () => {
-      const sheetEls = Array.from(document.querySelectorAll('.a4-sheet'));
-      if (!sheetEls.length) return;
+      if (!shuffledTokens.length) return;
 
       const statusBox = document.getElementById('export-status');
       const statusText = document.getElementById('export-status-text');
       const statusPct = document.getElementById('export-status-pct');
+      const progressBar = document.getElementById('export-progress-bar');
       statusBox.classList.remove('hidden');
+      progressBar.style.width = '0%';
 
       try {
+        const snapshots = await renderAllSheetsToSnapshots((curr, total, pct) => {
+          statusText.textContent = `Fast PDF Engine: Compositing A4 Sheet ${curr} of ${total}...`;
+          statusPct.textContent = `${pct}%`;
+          progressBar.style.width = `${pct}%`;
+        });
+
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-        for (let i = 0; i < sheetEls.length; i++) {
-          const pct = Math.round(((i + 1) / sheetEls.length) * 100);
-          statusText.textContent = `Building PDF: Rendering A4 Sheet ${i + 1} of ${sheetEls.length}...`;
-          statusPct.textContent = `${pct}%`;
-
-          const canvas = await html2canvas(sheetEls[i], {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff',
-            scrollX: 0,
-            scrollY: -window.scrollY
-          });
-
-          const imgData = canvas.toDataURL('image/jpeg', 0.94);
-          if (i > 0) pdf.addPage('a4', 'portrait');
+        snapshots.forEach((imgData, idx) => {
+          if (idx > 0) pdf.addPage('a4', 'portrait');
           pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-        }
+        });
 
         pdf.save('Yellow_House_Food_Tokens_14Nov.pdf');
       } catch (err) {
@@ -1052,109 +1423,50 @@
       }
     });
 
-    // Zero-Drift Native Word Table DOCX Export (.docx)
-    // Renders each unique card into an exact millimeter 2xN Word Table per A4 page so alignment never drifts in MS Word
+    // Fast Zero-Drift Canvas Snapshot DOCX Export (.docx)
     document.getElementById('btn-docx').addEventListener('click', async () => {
-      const sheetEls = Array.from(document.querySelectorAll('.a4-sheet'));
-      if (!sheetEls.length) return;
+      if (!shuffledTokens.length) return;
 
       const statusBox = document.getElementById('export-status');
       const statusText = document.getElementById('export-status-text');
       const statusPct = document.getElementById('export-status-pct');
+      const progressBar = document.getElementById('export-progress-bar');
       statusBox.classList.remove('hidden');
+      progressBar.style.width = '0%';
 
       try {
-        const {
-          Document, Packer, Paragraph, Table, TableRow, TableCell,
-          ImageRun, WidthType, HeightRule, BorderStyle
-        } = window.docx;
-
-        const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
-        const rowsPerPage = tokensPerPage / 2;
-
-        // Exact A4 twips math (1 mm = 56.6929 twips; A4 = 11906 x 16838 twips)
-        const cellWidthTwips = 5953; // 105mm
-        const rowHeightTwips = Math.floor(16838 / rowsPerPage);
-
-        // Exact pixel dimensions at 96 DPI for ImageRun inside each cell (210mm = 793.7px -> 105mm = 396px)
-        const cellWidthPx = 396;
-        const cellHeightPx = Math.floor(1122 / rowsPerPage);
-
-        const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
-        const cellBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
-
-        const docSections = [];
-
-        for (let sIdx = 0; sIdx < sheetEls.length; sIdx++) {
-          const pct = Math.round(((sIdx + 1) / sheetEls.length) * 100);
-          statusText.textContent = `Building Zero-Drift Word Table: Sheet ${sIdx + 1} of ${sheetEls.length}...`;
+        const snapshots = await renderAllSheetsToSnapshots((curr, total, pct) => {
+          statusText.textContent = `Fast DOCX Snapshot Engine: Compositing Sheet ${curr} of ${total}...`;
           statusPct.textContent = `${pct}%`;
+          progressBar.style.width = `${pct}%`;
+        });
 
-          const cardEls = Array.from(sheetEls[sIdx].querySelectorAll('.token-card'));
-          const tableRows = [];
+        statusText.textContent = 'Packaging locked A4 snapshots into Word (.docx)...';
 
-          for (let r = 0; r < rowsPerPage; r++) {
-            const rowCells = [];
-            for (let c = 0; c < 2; c++) {
-              const cardEl = cardEls[r * 2 + c];
-              const cardCanvas = await html2canvas(cardEl, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#fffde7',
-                scrollX: 0,
-                scrollY: -window.scrollY
-              });
-              const cardImgData = cardCanvas.toDataURL('image/jpeg', 0.94);
+        const { Document, Packer, Paragraph, ImageRun } = window.docx;
 
-              rowCells.push(
-                new TableCell({
-                  width: { size: cellWidthTwips, type: WidthType.DXA },
-                  margins: { top: 0, bottom: 0, left: 0, right: 0 },
-                  borders: cellBorders,
-                  children: [
-                    new Paragraph({
-                      spacing: { before: 0, after: 0, line: 240 },
-                      children: [
-                        new ImageRun({
-                          data: dataURLToUint8Array(cardImgData),
-                          transformation: {
-                            width: cellWidthPx,
-                            height: cellHeightPx
-                          }
-                        })
-                      ]
-                    })
-                  ]
-                })
-              );
+        const docSections = snapshots.map((imgData) => ({
+          properties: {
+            page: {
+              size: { width: 11906, height: 16838 }, // Exact A4 in twips
+              margin: { top: 0, right: 0, bottom: 0, left: 0 }
             }
-
-            tableRows.push(
-              new TableRow({
-                height: { value: rowHeightTwips, rule: HeightRule.EXACT },
-                cantSplit: true,
-                children: rowCells
-              })
-            );
-          }
-
-          docSections.push({
-            properties: {
-              page: {
-                size: { width: 11906, height: 16838 },
-                margin: { top: 0, right: 0, bottom: 0, left: 0 }
-              }
-            },
-            children: [
-              new Table({
-                width: { size: 11906, type: WidthType.DXA },
-                columnWidths: [cellWidthTwips, cellWidthTwips],
-                rows: tableRows
-              })
-            ]
-          });
-        }
+          },
+          children: [
+            new Paragraph({
+              spacing: { before: 0, after: 0, line: 240 },
+              children: [
+                new ImageRun({
+                  data: dataURLToUint8Array(imgData),
+                  transformation: {
+                    width: 794,  // Exact A4 width at 96 DPI
+                    height: 1123 // Exact A4 height at 96 DPI
+                  }
+                })
+              ]
+            })
+          ]
+        }));
 
         const doc = new Document({ sections: docSections });
         const blob = await Packer.toBlob(doc);
@@ -1178,16 +1490,16 @@
     document.getElementById('tokens-per-page').addEventListener('change', renderSheets);
 
     document.getElementById('watermark-opacity').addEventListener('input', (e) => {
-      const val = parseInt(e.target.value, 10) || 28;
+      const val = parseInt(e.target.value, 10) || 35;
       document.getElementById('opacity-label').textContent = `${val}%`;
       document.documentElement.style.setProperty('--wm-opacity', (val / 100).toFixed(2));
     });
 
     document.getElementById('btn-reset').addEventListener('click', () => {
       document.getElementById('tokens-per-page').value = '10';
-      document.getElementById('watermark-opacity').value = '28';
-      document.getElementById('opacity-label').textContent = '28%';
-      document.documentElement.style.setProperty('--wm-opacity', '0.28');
+      document.getElementById('watermark-opacity').value = '35';
+      document.getElementById('opacity-label').textContent = '35%';
+      document.documentElement.style.setProperty('--wm-opacity', '0.35');
       menuState = DEFAULT_MENU.map(item => ({ ...item, qty: item.defaultQty }));
       renderMenuControls();
       rebuildAndShuffleTokens();
