@@ -15,12 +15,15 @@
     :root {
       --rows: 5;
       --row-height: calc(297mm / var(--rows));
-      --item-font-size: 13.5pt;
-      --price-font-size: 27pt;
-      --words-font-size: 7pt;
-      --pad-v: 3.2mm;
+      --item-font-size: 17pt;
+      --price-font-size: 31pt;
+      --words-font-size: 10.5pt;
+      --corner-house-size: 14.5pt;
+      --corner-pill-size: 12pt;
+      --corner-footer-size: 12pt;
+      --pad-v: 2.8mm;
       --wm-opacity: 0.35;
-      --wm-size: 46mm;
+      --wm-size: 64mm;
       --sunflower-base: #FFD700;
     }
 
@@ -133,13 +136,13 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1.5px solid #78350f;
-      padding-bottom: 1mm;
+      padding-bottom: 1.2mm;
       position: relative;
       z-index: 5;
     }
 
     .house-badge {
-      font-size: 8.5pt;
+      font-size: var(--corner-house-size);
       font-weight: 900;
       color: #451a03;
       letter-spacing: 0.6px;
@@ -150,12 +153,12 @@
     }
 
     .event-pill {
-      font-size: 6.5pt;
+      font-size: var(--corner-pill-size);
       font-weight: 900;
       color: #ffffff;
       background: #78350f;
-      padding: 1.2px 6px;
-      border-radius: 3px;
+      padding: 1.8px 7px;
+      border-radius: 3.5px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -220,11 +223,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 6.5pt;
-      font-weight: 800;
+      font-size: var(--corner-footer-size);
+      font-weight: 900;
       color: #291502;
-      border-top: 1px dashed #78350f;
-      padding-top: 1mm;
+      border-top: 1.5px dashed #78350f;
+      padding-top: 1.2mm;
       position: relative;
       z-index: 5;
     }
@@ -341,6 +344,75 @@
         <p class="text-[10px] text-zinc-400 mt-0.5">
           Pre-renders the 8 unique food templates once and stamps 350 tokens in ~2 seconds with 0.0mm Word alignment drift.
         </p>
+      </div>
+    </div>
+
+    <!-- Live Typography & Watermark Size Tuning Sliders -->
+    <div class="mt-4 bg-zinc-950/70 border border-yellow-500/30 rounded-xl p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-black uppercase tracking-wider text-yellow-400">
+            🎛️ Live Token Typography &amp; Element Size Sliders (Smart Adjusters)
+          </span>
+          <span class="text-[10px] bg-yellow-400/15 text-yellow-300 border border-yellow-400/30 px-2 py-0.5 rounded font-bold">
+            Syncs with Live Preview, PDF &amp; Word (.docx)
+          </span>
+        </div>
+        <button id="btn-reset-sliders" class="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-[11px] font-bold text-zinc-300 border border-zinc-700 transition">
+          ↺ Reset Sliders to 0
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <!-- Slider 1: Corner Labels (Yellow House, 14 Nov Fair, ID, Valid) -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-zinc-300 uppercase">1. Corner Labels</label>
+            <span id="val-adj-corner" class="text-xs font-black text-yellow-400">+0pt</span>
+          </div>
+          <input type="range" id="adj-corner" min="-4" max="8" step="0.5" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-500 mt-1">House, Date, ID &amp; Valid</div>
+        </div>
+
+        <!-- Slider 2: Food Item Title -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-zinc-300 uppercase">2. Dish Title</label>
+            <span id="val-adj-title" class="text-xs font-black text-yellow-400">+0pt</span>
+          </div>
+          <input type="range" id="adj-title" min="-5" max="10" step="0.5" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-500 mt-1">Center White Pill Text</div>
+        </div>
+
+        <!-- Slider 3: Price Figure (Rs) -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-zinc-300 uppercase">3. ₹ Price Figure</label>
+            <span id="val-adj-price" class="text-xs font-black text-yellow-400">+0pt</span>
+          </div>
+          <input type="range" id="adj-price" min="-8" max="16" step="1" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-500 mt-1">Main ₹10–₹60 Number</div>
+        </div>
+
+        <!-- Slider 4: Amount in Words -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-zinc-300 uppercase">4. Price in Words</label>
+            <span id="val-adj-words" class="text-xs font-black text-yellow-400">+0pt</span>
+          </div>
+          <input type="range" id="adj-words" min="-4" max="8" step="0.5" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-500 mt-1">TEN / THIRTY RUPEES ONLY</div>
+        </div>
+
+        <!-- Slider 5: Background Food Image Size -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-zinc-300 uppercase">5. Dish Image Size</label>
+            <span id="val-adj-wmsize" class="text-xs font-black text-yellow-400">+0mm</span>
+          </div>
+          <input type="range" id="adj-wmsize" min="-20" max="25" step="1" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-500 mt-1">3D Food Watermark Scale</div>
+        </div>
       </div>
     </div>
 
@@ -1000,43 +1072,47 @@
       renderSheets();
     }
 
-    // Apply responsive typography & watermark sizing based on selected tokens per page
+    // Read current Smart Slider offsets
+    function getSliderOffsets() {
+      return {
+        corner: parseFloat(document.getElementById('adj-corner')?.value) || 0,
+        title:  parseFloat(document.getElementById('adj-title')?.value) || 0,
+        price:  parseFloat(document.getElementById('adj-price')?.value) || 0,
+        words:  parseFloat(document.getElementById('adj-words')?.value) || 0,
+        wmSize: parseFloat(document.getElementById('adj-wmsize')?.value) || 0
+      };
+    }
+
+    // Base typography & watermark presets per grid density
+    function getBaseGridSpecs(tokensPerPage) {
+      if (tokensPerPage === 8) {
+        return { item: 18.5, price: 35, words: 11.5, house: 15.5, pill: 13, footer: 13, padV: '3.6mm', wm: 74 };
+      } else if (tokensPerPage === 10) {
+        return { item: 17, price: 31, words: 10.5, house: 14.5, pill: 12, footer: 12, padV: '2.8mm', wm: 64 };
+      } else if (tokensPerPage === 12) {
+        return { item: 15.5, price: 27, words: 9.5, house: 13.5, pill: 11, footer: 11, padV: '2.2mm', wm: 55 };
+      } else if (tokensPerPage === 14) {
+        return { item: 14, price: 23.5, words: 9, house: 12.5, pill: 10, footer: 10, padV: '1.6mm', wm: 48 };
+      }
+      return { item: 13, price: 21, words: 8.5, house: 11.5, pill: 9.5, footer: 9.5, padV: '1.2mm', wm: 42 };
+    }
+
+    // Apply responsive typography & watermark sizing + Smart Slider offsets
     function applyGridScalingCSS(tokensPerPage) {
       const rows = tokensPerPage / 2;
       document.documentElement.style.setProperty('--rows', rows);
 
-      if (tokensPerPage === 8) {
-        document.documentElement.style.setProperty('--item-font-size', '15pt');
-        document.documentElement.style.setProperty('--price-font-size', '31pt');
-        document.documentElement.style.setProperty('--words-font-size', '7.5pt');
-        document.documentElement.style.setProperty('--pad-v', '4.2mm');
-        document.documentElement.style.setProperty('--wm-size', '54mm');
-      } else if (tokensPerPage === 10) {
-        document.documentElement.style.setProperty('--item-font-size', '13.5pt');
-        document.documentElement.style.setProperty('--price-font-size', '27pt');
-        document.documentElement.style.setProperty('--words-font-size', '7pt');
-        document.documentElement.style.setProperty('--pad-v', '3.2mm');
-        document.documentElement.style.setProperty('--wm-size', '46mm');
-      } else if (tokensPerPage === 12) {
-        document.documentElement.style.setProperty('--item-font-size', '12pt');
-        document.documentElement.style.setProperty('--price-font-size', '23pt');
-        document.documentElement.style.setProperty('--words-font-size', '6.5pt');
-        document.documentElement.style.setProperty('--pad-v', '2.4mm');
-        document.documentElement.style.setProperty('--wm-size', '39mm');
-      } else if (tokensPerPage === 14) {
-        document.documentElement.style.setProperty('--item-font-size', '10.5pt');
-        document.documentElement.style.setProperty('--price-font-size', '20pt');
-        document.documentElement.style.setProperty('--words-font-size', '6pt');
-        document.documentElement.style.setProperty('--pad-v', '1.8mm');
-        document.documentElement.style.setProperty('--wm-size', '34mm');
-      } else {
-        // 16 tokens per page
-        document.documentElement.style.setProperty('--item-font-size', '9.5pt');
-        document.documentElement.style.setProperty('--price-font-size', '17.5pt');
-        document.documentElement.style.setProperty('--words-font-size', '5.5pt');
-        document.documentElement.style.setProperty('--pad-v', '1.4mm');
-        document.documentElement.style.setProperty('--wm-size', '30mm');
-      }
+      const base = getBaseGridSpecs(tokensPerPage);
+      const adj = getSliderOffsets();
+
+      document.documentElement.style.setProperty('--item-font-size', `${Math.max(7, base.item + adj.title)}pt`);
+      document.documentElement.style.setProperty('--price-font-size', `${Math.max(12, base.price + adj.price)}pt`);
+      document.documentElement.style.setProperty('--words-font-size', `${Math.max(5, base.words + adj.words)}pt`);
+      document.documentElement.style.setProperty('--corner-house-size', `${Math.max(6, base.house + adj.corner)}pt`);
+      document.documentElement.style.setProperty('--corner-pill-size', `${Math.max(6, base.pill + adj.corner)}pt`);
+      document.documentElement.style.setProperty('--corner-footer-size', `${Math.max(6, base.footer + adj.corner)}pt`);
+      document.documentElement.style.setProperty('--pad-v', base.padV);
+      document.documentElement.style.setProperty('--wm-size', `${Math.max(20, base.wm + adj.wmSize)}mm`);
     }
 
     // Render all single-sided A4 sheets
@@ -1157,14 +1233,48 @@
       const rows = tokensPerPage / 2;
       const wmOpacity = (parseInt(document.getElementById('watermark-opacity').value, 10) || 35) / 100;
 
-      // Crisp 2x A4 Print Canvas Resolution: 1588 x 2246 px (exact 210:297 ratio)
+      // Ensure CSS custom properties reflect the latest slider & grid values
+      applyGridScalingCSS(tokensPerPage);
+
+      // Read live computed CSS custom properties directly so Canvas matches HTML 1:1
+      const rootStyle = getComputedStyle(document.documentElement);
+      const parseCSSVal = (propName, fallback) => {
+        const val = parseFloat(rootStyle.getPropertyValue(propName));
+        return Number.isFinite(val) ? val : fallback;
+      };
+
+      const itemPt   = parseCSSVal('--item-font-size', 17);
+      const pricePt  = parseCSSVal('--price-font-size', 31);
+      const wordsPt  = parseCSSVal('--words-font-size', 10.5);
+      const housePt  = parseCSSVal('--corner-house-size', 14.5);
+      const pillPt   = parseCSSVal('--corner-pill-size', 12);
+      const footerPt = parseCSSVal('--corner-footer-size', 12);
+      const padVMm   = parseCSSVal('--pad-v', 2.8);
+      const wmSizeMm = parseCSSVal('--wm-size', 64);
+
+      // Crisp 2x A4 Print Canvas Resolution: 1588 x 2246 px (exact 210mm x 297mm @ 2x 96 DPI)
       const SHEET_W = 1588;
       const SHEET_H = 2246;
-      const CARD_W = SHEET_W / 2;       // 794 px
+      const CARD_W = SHEET_W / 2;       // 794 px = 105mm
       const CARD_H = SHEET_H / rows;
 
-      // Scale factor relative to default 5-row layout
-      const rowScale = Math.min(1.15, Math.max(0.64, 5 / rows));
+      // Exact physical unit conversions at 2x 96 DPI (1588px / 210mm)
+      const MM_TO_PX = SHEET_W / 210;   // 7.5619 px/mm
+      const PT_TO_PX = (96 / 72) * 2;   // 2.6667 px/pt
+
+      // Convert live CSS typography & dimensions to exact 2x canvas pixels
+      const houseFontPx  = Math.round(housePt * PT_TO_PX);
+      const badgeFontPx  = Math.round(pillPt * PT_TO_PX);
+      const footerFontPx = Math.round(footerPt * PT_TO_PX);
+      const titleFontPx  = Math.round(itemPt * PT_TO_PX);
+      const priceFontPx  = Math.round(pricePt * PT_TO_PX);
+      const wordsFontPx  = Math.round(wordsPt * PT_TO_PX);
+      const wmSizePx     = Math.round(wmSizeMm * MM_TO_PX);
+
+      // Exact frame & padding geometry matching .token-card (2mm) and .token-inner-frame (pad-v, 4.2mm)
+      const inset = Math.round(2 * MM_TO_PX);
+      const padX  = inset + Math.round(4.2 * MM_TO_PX);
+      const padV  = Math.round(padVMm * MM_TO_PX);
 
       // Step 1: Pre-render 1 reusable base template canvas per unique food item (8 templates total)
       const baseTemplates = {};
@@ -1191,8 +1301,7 @@
         ctx.strokeRect(1, 1, CARD_W - 2, H - 2);
         ctx.restore();
 
-        // 3. Inner rounded rectangle frame
-        const inset = 15;
+        // 3. Inner rounded rectangle frame (clipped so large watermarks stay inside the frame like CSS overflow:hidden)
         const frameW = CARD_W - inset * 2;
         const frameH = H - inset * 2;
         ctx.save();
@@ -1200,50 +1309,53 @@
         ctx.strokeStyle = 'rgba(146, 64, 14, 0.52)';
         ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.restore();
+        ctx.clip();
 
-        // 4. Centered 3D Food Illustration Watermark from pre-rasterized cache
+        // 4. Centered 3D Food Illustration Watermark using exact --wm-size in mm
         const cached = bitmapWatermarkCache[item.id];
         if (cached && cached.canvas) {
-          const wmSize = Math.min(CARD_W * 0.46, H * 0.78);
           ctx.save();
           ctx.globalAlpha = wmOpacity;
           ctx.drawImage(
             cached.canvas,
-            (CARD_W - wmSize) / 2,
-            (H * 0.52) - (wmSize / 2),
-            wmSize,
-            wmSize
+            (CARD_W - wmSizePx) / 2,
+            (H * 0.52) - (wmSizePx / 2),
+            wmSizePx,
+            wmSizePx
           );
           ctx.restore();
         }
-
-        const padX = inset + 28;
-        const padTop = inset + Math.round(20 * rowScale);
-        const headerBottomY = padTop + Math.round(28 * rowScale);
+        ctx.restore();
 
         // 5. Top Header: Left '★ YELLOW HOUSE' & Right '14 NOV FAIR' pill badge
+        const headerTopY = inset + padV;
+        const badgeH = Math.round(badgeFontPx * 1.15 + 7);
+        const headerContentH = Math.max(Math.round(houseFontPx * 1.15), badgeH);
+        const headerCenterY = headerTopY + headerContentH / 2;
+        const headerBottomY = headerTopY + headerContentH + Math.round(1.2 * MM_TO_PX);
+
         ctx.save();
-        ctx.font = `900 ${Math.round(18 * rowScale)}px "Segoe UI", system-ui, sans-serif`;
+        ctx.font = `900 ${houseFontPx}px "Segoe UI", system-ui, sans-serif`;
         ctx.fillStyle = '#451a03';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText('★ YELLOW HOUSE', padX, padTop + Math.round(12 * rowScale));
+        ctx.fillText('★ YELLOW HOUSE', padX, headerCenterY);
 
         // Right event pill badge
         const badgeText = '14 NOV FAIR';
-        ctx.font = `900 ${Math.round(14 * rowScale)}px "Segoe UI", system-ui, sans-serif`;
+        ctx.font = `900 ${badgeFontPx}px "Segoe UI", system-ui, sans-serif`;
         const badgeMetrics = ctx.measureText(badgeText);
-        const badgeW = badgeMetrics.width + 22;
-        const badgeH = Math.round(24 * rowScale);
+        const badgeW = badgeMetrics.width + 28;
         const badgeX = CARD_W - padX - badgeW;
-        const badgeY = padTop + Math.round(12 * rowScale) - badgeH / 2;
+        const badgeY = headerCenterY - badgeH / 2;
 
-        roundRectPath(ctx, badgeX, badgeY, badgeW, badgeH, 6);
+        roundRectPath(ctx, badgeX, badgeY, badgeW, badgeH, 7);
         ctx.fillStyle = '#78350f';
         ctx.fill();
 
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2 + 1);
 
         // Solid header bottom line
@@ -1251,27 +1363,60 @@
         ctx.moveTo(padX, headerBottomY);
         ctx.lineTo(CARD_W - padX, headerBottomY);
         ctx.strokeStyle = '#78350f';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 3;
         ctx.stroke();
         ctx.restore();
 
-        // 6. Center Body: White/Cream Rounded Pill Box + Food Item Name
-        const centerY = H * 0.50;
+        // 6. Footer Dashed Divider Line & Static Right Text (computed before body so body centers dynamically between header & footer)
+        const footerBottomY = H - inset - padV;
+        const footerContentH = Math.round(footerFontPx * 1.15);
+        const footerTextY = footerBottomY - footerContentH / 2;
+        const footerTopY = footerBottomY - footerContentH - Math.round(1.2 * MM_TO_PX);
+
         ctx.save();
-        const titleFontPx = Math.round(28 * rowScale);
+        ctx.beginPath();
+        ctx.setLineDash([7, 5]);
+        ctx.moveTo(padX, footerTopY);
+        ctx.lineTo(CARD_W - padX, footerTopY);
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 2.6;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.font = `900 ${footerFontPx}px "Segoe UI", system-ui, sans-serif`;
+        ctx.fillStyle = '#291502';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('VALID: 14 NOV • SINGLE USE', CARD_W - padX, footerTextY);
+        ctx.restore();
+
+        // 7. Dynamically Centered Foreground Body Stack (Pill Box + ₹ Price + Price in Words)
+        ctx.save();
         ctx.font = `900 ${titleFontPx}px "Segoe UI", system-ui, sans-serif`;
         const titleStr = item.name.toUpperCase();
         const titleW = ctx.measureText(titleStr).width;
-        const pillPadX = 28;
+        const pillPadX = Math.round(3.8 * MM_TO_PX);
+        const pillPadY = Math.round(1.0 * MM_TO_PX);
         const pillW = titleW + pillPadX * 2;
-        const pillH = Math.round(40 * rowScale);
-        const pillX = (CARD_W - pillW) / 2;
-        const pillY = centerY - Math.round(62 * rowScale);
+        const pillH = Math.round(titleFontPx * 1.1) + pillPadY * 2;
 
+        const gap1 = Math.round(0.8 * MM_TO_PX);
+        const priceBlockH = Math.round(priceFontPx * 0.96);
+        const gap2 = Math.round(0.7 * MM_TO_PX);
+        const wordsBlockH = Math.round(wordsFontPx * 1.1);
+
+        // Center the entire 3-element stack vertically between headerBottomY and footerTopY (matching CSS margin: auto 0)
+        const totalStackH = pillH + gap1 + priceBlockH + gap2 + wordsBlockH;
+        const availMidY = (headerBottomY + footerTopY) / 2;
+        const stackStartY = availMidY - totalStackH / 2;
+
+        // Draw Food Item Pill Box
+        const pillX = (CARD_W - pillW) / 2;
+        const pillY = stackStartY;
         roundRectPath(ctx, pillX, pillY, pillW, pillH, 8);
         ctx.fillStyle = 'rgba(255, 253, 240, 0.90)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(146, 64, 14, 0.42)';
+        ctx.strokeStyle = 'rgba(146, 64, 14, 0.45)';
         ctx.lineWidth = 2;
         ctx.stroke();
 
@@ -1280,53 +1425,33 @@
         ctx.textBaseline = 'middle';
         ctx.fillText(titleStr, CARD_W / 2, pillY + pillH / 2 + 1);
 
-        // 7. Large Price Figure with Crisp White Outline
-        const priceFontPx = Math.round(58 * rowScale);
+        // Draw Large Price Figure with Crisp White Outline
+        const priceCenterY = pillY + pillH + gap1 + priceBlockH * 0.52;
         ctx.font = `900 ${priceFontPx}px "Segoe UI", system-ui, sans-serif`;
         const priceStr = `₹${item.price}`;
-        const priceY = pillY + pillH + Math.round(36 * rowScale);
-
         ctx.lineJoin = 'round';
         ctx.miterLimit = 2;
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 7;
-        ctx.strokeText(priceStr, CARD_W / 2, priceY);
-
+        ctx.lineWidth = Math.max(6, Math.round(priceFontPx * 0.11));
+        ctx.strokeText(priceStr, CARD_W / 2, priceCenterY);
         ctx.fillStyle = '#78350f';
-        ctx.fillText(priceStr, CARD_W / 2, priceY);
+        ctx.fillText(priceStr, CARD_W / 2, priceCenterY);
 
-        // 8. Amount in Words below Price
-        const wordsFontPx = Math.round(15 * rowScale);
+        // Draw Amount in Words below Price
+        const wordsCenterY = pillY + pillH + gap1 + priceBlockH + gap2 + wordsBlockH * 0.55;
         ctx.font = `900 ${wordsFontPx}px "Segoe UI", system-ui, sans-serif`;
-        const wordsY = priceY + Math.round(34 * rowScale);
-        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-        ctx.lineWidth = 3;
-        ctx.strokeText(item.words, CARD_W / 2, wordsY);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.lineWidth = Math.max(3, Math.round(wordsFontPx * 0.16));
+        ctx.strokeText(item.words, CARD_W / 2, wordsCenterY);
         ctx.fillStyle = '#1c1917';
-        ctx.fillText(item.words, CARD_W / 2, wordsY);
-
-        // 9. Footer Dashed Divider Line & Static Right Text
-        const footerTopY = H - inset - Math.round(38 * rowScale);
-        ctx.beginPath();
-        ctx.setLineDash([6, 5]);
-        ctx.moveTo(padX, footerTopY);
-        ctx.lineTo(CARD_W - padX, footerTopY);
-        ctx.strokeStyle = '#78350f';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.font = `800 ${Math.round(14 * rowScale)}px "Segoe UI", system-ui, sans-serif`;
-        ctx.fillStyle = '#291502';
-        ctx.textAlign = 'right';
-        ctx.fillText('VALID: 14 NOV • SINGLE USE', CARD_W - padX, footerTopY + Math.round(18 * rowScale));
+        ctx.fillText(item.words, CARD_W / 2, wordsCenterY);
         ctx.restore();
 
         baseTemplates[item.id] = {
           canvas: tpl,
           padX,
-          footerTextY: footerTopY + Math.round(18 * rowScale),
-          footerFontPx: Math.round(14 * rowScale)
+          footerTextY,
+          footerFontPx
         };
       });
 
@@ -1358,9 +1483,9 @@
             // Stamp pre-rendered food card template in <0.1ms
             sctx.drawImage(tplInfo.canvas, x, y);
 
-            // Stamp unique token ID on bottom-left footer
+            // Stamp unique token ID on bottom-left footer (Larger Bold Corner Font)
             sctx.save();
-            sctx.font = `800 ${tplInfo.footerFontPx}px "Segoe UI", system-ui, sans-serif`;
+            sctx.font = `900 ${tplInfo.footerFontPx}px "Segoe UI", system-ui, sans-serif`;
             sctx.fillStyle = '#291502';
             sctx.textAlign = 'left';
             sctx.textBaseline = 'middle';
@@ -1495,11 +1620,50 @@
       document.documentElement.style.setProperty('--wm-opacity', (val / 100).toFixed(2));
     });
 
+    // Bind Live Typography & Dish Image Size Sliders
+    function bindTypographySliders() {
+      const sliderConfigs = [
+        { id: 'adj-corner', labelId: 'val-adj-corner', unit: 'pt' },
+        { id: 'adj-title',  labelId: 'val-adj-title',  unit: 'pt' },
+        { id: 'adj-price',  labelId: 'val-adj-price',  unit: 'pt' },
+        { id: 'adj-words',  labelId: 'val-adj-words',  unit: 'pt' },
+        { id: 'adj-wmsize', labelId: 'val-adj-wmsize', unit: 'mm' }
+      ];
+
+      sliderConfigs.forEach(cfg => {
+        const el = document.getElementById(cfg.id);
+        const lbl = document.getElementById(cfg.labelId);
+        if (!el || !lbl) return;
+
+        el.addEventListener('input', () => {
+          const val = parseFloat(el.value) || 0;
+          const sign = val >= 0 ? '+' : '';
+          lbl.textContent = `${sign}${val}${cfg.unit}`;
+          const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
+          applyGridScalingCSS(tokensPerPage);
+        });
+      });
+
+      document.getElementById('btn-reset-sliders').addEventListener('click', () => {
+        sliderConfigs.forEach(cfg => {
+          const el = document.getElementById(cfg.id);
+          const lbl = document.getElementById(cfg.labelId);
+          if (el && lbl) {
+            el.value = '0';
+            lbl.textContent = `+0${cfg.unit}`;
+          }
+        });
+        const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
+        applyGridScalingCSS(tokensPerPage);
+      });
+    }
+
     document.getElementById('btn-reset').addEventListener('click', () => {
       document.getElementById('tokens-per-page').value = '10';
       document.getElementById('watermark-opacity').value = '35';
       document.getElementById('opacity-label').textContent = '35%';
       document.documentElement.style.setProperty('--wm-opacity', '0.35');
+      document.getElementById('btn-reset-sliders').click();
       menuState = DEFAULT_MENU.map(item => ({ ...item, qty: item.defaultQty }));
       renderMenuControls();
       rebuildAndShuffleTokens();
@@ -1507,6 +1671,7 @@
 
     // Initialize Application
     window.addEventListener('DOMContentLoaded', () => {
+      bindTypographySliders();
       renderMenuControls();
       rebuildAndShuffleTokens();
     });
