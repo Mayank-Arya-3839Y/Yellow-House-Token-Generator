@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yellow House Token & Anime Puzzle Print Engine</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Export Libraries: html2canvas, jsPDF, and docx -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+
+  <style>
+    :root {
+      --rows: 5;
+      --row-height: calc(297mm / var(--rows));
+      --denom-size: 30pt;
+      --pad-v: 4mm;
+    }
+
+    @page {
+      size: 210mm 297mm;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background-color: #121216;
+      color: #f4f4f5;
+    }
+
+    /* =========================================================
+       A4 SHEET DIMENSIONS & DYNAMIC GRID
+       ========================================================= */
+    .a4-sheet {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      background: #ffffff;
+      color: #000000;
+      display: grid;
+      grid-template-columns: 105mm 105mm;
+      grid-template-rows: repeat(var(--rows), var(--row-height));
+      page-break-after: always;
+      break-after: page;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+    }
+
+    /* =========================================================
+       FRONT SIDE: TOKEN CELLS
+       ========================================================= */
+    .token-front {
+      width: 105mm;
+      height: var(--row-height);
+      border: 1px dashed #c89614;
+      padding: var(--pad-v) 6mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .token-val-5  { background: linear-gradient(135deg, #ffffff 0%, #fef9c3 100%); }
+    .token-val-10 { background: linear-gradient(135deg, #fffdf0 0%, #fef08a 100%); }
+    .token-val-30 { background: linear-gradient(135deg, #fffbeb 0%, #fde047 100%); }
+    .token-val-60 { background: linear-gradient(135deg, #fff7ed 0%, #facc15 100%); }
+
+    .token-empty {
+      background: #fafafa;
+      border: 1px dashed #e4e4e7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a1a1aa;
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .token-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid #b45309;
+      padding-bottom: 1mm;
+    }
+
+    .house-badge {
+      font-size: 8.5pt;
+      font-weight: 900;
+      color: #78350f;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .event-pill {
+      font-size: 6.5pt;
+      font-weight: 800;
+      color: #451a03;
+      background: #fde047;
+      padding: 1px 5px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      border: 0.5px solid #ca8a04;
+    }
+
+    .token-body {
+      text-align: center;
+      margin: auto 0;
+    }
+
+    .token-symbol {
+      font-size: var(--denom-size);
+      font-weight: 900;
+      color: #b45309;
+      line-height: 0.95;
+      letter-spacing: -0.5px;
+      text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.85);
+    }
+
+    .token-words {
+      font-size: 7.5pt;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      color: #27272a;
+      text-transform: uppercase;
+      margin-top: 1mm;
+    }
+
+    .token-footer {
+      display: flex;
+      justify-content: space-between;
+      font-size: 6.5pt;
+      font-weight: 700;
+      color: #52525b;
+      border-top: 1px dashed #b45309;
+      padding-top: 1mm;
+    }
+
+    /* =========================================================
+       BACK SIDE: SLICED ANIME ARTWORK + AUTO-ORIENTATION QUOTE BAR
+       ========================================================= */
+    .a4-sheet.puzzle-back {
+      background: #09090b;
+      position: relative;
+    }
+
+    .puzzle-tile {
+      width: 105mm;
+      height: var(--row-height);
+      border: 0.5px dashed rgba(255, 255, 255, 0.25);
+      background-repeat: no-repeat;
+      background-size: 210mm 297mm;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Manga Quote Strip Container */
+    .manga-quote-strip {
+      position: absolute;
+      background: #ffffff;
+      color: #09090b;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Segoe UI', Impact, Arial, sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* Portrait Image -> Quote Bar along the BOTTOM edge */
+    .quote-strip-bottom {
+      bottom: 0;
+      left: 0;
+      width: 210mm;
+      height: 8.5mm;
+      padding: 0 5mm;
+      border-top: 2px solid #09090b;
+      font-size: 8.5pt;
+      flex-direction: row;
+    }
+
+    /* Landscape Image -> Quote Bar vertically along the LEFT edge */
+    .quote-strip-left {
+      top: 0;
+      left: 0;
+      width: 8.5mm;
+      height: 297mm;
+      padding: 5mm 0;
+      border-right: 2px solid #09090b;
+      font-size: 8.5pt;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      flex-direction: row;
+    }
+
+    .chapter-tag {
+      background: #09090b;
+      color: #facc15;
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-size: 7.5pt;
+      font-weight: 900;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+
+    .quote-strip-left .chapter-tag {
+      padding: 6px 1px;
+    }
+
+    .quote-text-body {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Print Media Query */
+    @media print {
+      body {
+        background: transparent !important;
+      }
+      #control-panel,
+      .sheet-meta-bar {
+        display: none !important;
+      }
+      #print-container {
+        padding: 0 !important;
+        gap: 0 !important;
+      }
+      .a4-sheet {
+        margin: 0 !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="pb-20">
+
+  <!-- =========================================================
+       INTERACTIVE CONTROL PANEL & IMAGE / SHEET MANAGER
+       ========================================================= -->
+  <header id="control-panel" class="max-w-6xl mx-auto mt-4 mb-8 bg-zinc-900 border border-yellow-500/40 rounded-2xl p-6 shadow-2xl">
+    <!-- Top Header & Action Buttons -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <span class="inline-block w-3.5 h-3.5 rounded-full bg-yellow-400 animate-ping"></span>
+          <h1 class="text-2xl font-black tracking-tight text-yellow-400 uppercase">
+            Yellow House Token &amp; Anime Puzzle Engine
+          </h1>
+        </div>
+        <p class="text-xs text-zinc-400 mt-1">
+          14 Nov Children's Day Fair &bull; True Random Token Mix &bull; Smart Orientation Quote Bar &bull; Winner/Decoy Cipher
+        </p>
+      </div>
+
+      <!-- Export & Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button id="btn-shuffle" class="px-4 py-2.5 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-zinc-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-yellow-500/20 transition flex items-center gap-1.5">
+          <span>🔀 Shuffle &amp; Regenerate</span>
+        </button>
+        <button id="btn-reset" class="px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs uppercase border border-zinc-700 transition">
+          ↺ Reset
+        </button>
+        <button id="btn-pdf" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/25 transition flex items-center gap-1.5">
+          <span>📄 Export PDF (.pdf)</span>
+        </button>
+        <button id="btn-docx" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-600/25 transition flex items-center gap-1.5">
+          <span>📝 Export Word (.docx)</span>
+        </button>
+        <button id="btn-print" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/25 transition flex items-center gap-1.5">
+          <span>🖨️ Print (Ctrl+P)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Export Progress Notification Banner -->
+    <div id="export-status" class="hidden mt-4 bg-amber-500/15 border border-amber-400/50 rounded-xl p-3.5 flex items-center justify-between text-amber-300 text-xs font-bold">
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 animate-spin text-amber-400" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        <span id="export-status-text">Rendering high-resolution pages...</span>
+      </div>
+      <span id="export-status-pct" class="font-black text-sm">0%</span>
+    </div>
+
+    <!-- Step 1: Quotas & Grid Size Configuration -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mt-5">
+      <div class="bg-zinc-950/80 border border-zinc-800 rounded-xl p-3">
+        <label class="text-[11px] font-bold text-zinc-400 uppercase block mb-1">Tokens / Page</label>
+        <select id="tokens-per-page" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-base font-black text-yellow-400 focus:outline-none focus:border-yellow-400 cursor-pointer">
+          <option value="8">8 (2 × 4 Grid)</option>
+          <option value="10" selected>10 (2 × 5 Grid)</option>
+          <option value="12">12 (2 × 6 Grid)</option>
+          <option value="14">14 (2 × 7 Grid)</option>
+          <option value="16">16 (2 × 8 Grid)</option>
+        </select>
+        <div class="mt-1.5 text-[11px] text-zinc-500">Auto-scales height</div>
+      </div>
+
+      <div class="bg-zinc-950/80 border border-zinc-800 rounded-xl p-3">
+        <label class="text-[11px] font-bold text-zinc-400 uppercase block mb-1">₹5 Quota</label>
+        <input type="number" id="quota-5" value="100" min="0" max="2000" step="10" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-base font-black text-white focus:outline-none focus:border-yellow-400"/>
+        <div class="mt-1.5 text-[11px] text-zinc-400">Val: <b id="val-5" class="text-yellow-400">₹500</b></div>
+      </div>
+
+      <div class="bg-zinc-950/80 border border-zinc-800 rounded-xl p-3">
+        <label class="text-[11px] font-bold text-zinc-400 uppercase block mb-1">₹10 Quota</label>
+        <input type="number" id="quota-10" value="100" min="0" max="2000" step="10" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-base font-black text-white focus:outline-none focus:border-yellow-400"/>
+        <div class="mt-1.5 text-[11px] text-zinc-400">Val: <b id="val-10" class="text-yellow-400">₹1,000</b></div>
+      </div>
+
+      <div class="bg-zinc-950/80 border border-zinc-800 rounded-xl p-3">
+        <label class="text-[11px] font-bold text-zinc-400 uppercase block mb-1">₹30 Quota</label>
+        <input type="number" id="quota-30" value="100" min="0" max="2000" step="10" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-base font-black text-white focus:outline-none focus:border-yellow-400"/>
+        <div class="mt-1.5 text-[11px] text-zinc-400">Val: <b id="val-30" class="text-yellow-400">₹3,000</b></div>
+      </div>
+
+      <div class="bg-zinc-950/80 border border-zinc-800 rounded-xl p-3">
+        <label class="text-[11px] font-bold text-zinc-400 uppercase block mb-1">₹60 Quota</label>
+        <input type="number" id="quota-60" value="100" min="0" max="2000" step="10" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-base font-black text-white focus:outline-none focus:border-yellow-400"/>
+        <div class="mt-1.5 text-[11px] text-zinc-400">Val: <b id="val-60" class="text-yellow-400">₹6,000</b></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Multi-Image Anime Pool & Custom Quote Manager -->
+    <div class="mt-6 pt-5 border-t border-zinc-800">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+        <div>
+          <h2 class="text-sm font-black uppercase text-yellow-400 tracking-wide">
+            🖼️ Back-Side Anime Image &amp; Quote Pool
+          </h2>
+          <p class="text-[11px] text-zinc-400">
+            Upload multiple anime pictures at once. Portrait images place the quote at the <b>Bottom</b>; Landscape images place the quote along the <b>Left</b>.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="multi-image-input" class="cursor-pointer px-4 py-2 rounded-xl bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 border border-yellow-500/40 font-bold text-xs transition inline-flex items-center gap-1.5">
+            <span>+ Upload Anime Images (Multiple)</span>
+          </label>
+          <input type="file" id="multi-image-input" accept="image/*" multiple class="hidden"/>
+        </div>
+      </div>
+
+      <!-- Uploaded Image List -->
+      <div id="image-pool-list" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
+        <!-- Populated dynamically via JS -->
+      </div>
+    </div>
+
+    <!-- Step 3: Per-Sheet Winner / Decoy & Image Assignment Manager -->
+    <div class="mt-6 pt-5 border-t border-zinc-800">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+        <div>
+          <h2 class="text-sm font-black uppercase text-emerald-400 tracking-wide">
+            🏆 Per-Sheet Winner vs. Decoy Security Controller
+          </h2>
+          <p class="text-[11px] text-zinc-400">
+            <b>Winner Sheet:</b> Starts with <code class="text-yellow-300">[CH. 14]</code> and ends with <code class="text-yellow-300">!</code> &bull;
+            <b>Decoy Sheet:</b> Starts with <code class="text-zinc-300">[CH. 11]</code> and ends with <code class="text-zinc-300">.</code>
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-all-decoy" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-[11px] font-bold text-zinc-300 border border-zinc-700">
+            Set All Decoys (Except Sheet #1)
+          </button>
+          <button id="btn-all-winner" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-[11px] font-bold text-yellow-400 border border-zinc-700">
+            Set All Winners
+          </button>
+        </div>
+      </div>
+
+      <div id="sheet-assignment-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 max-h-48 overflow-y-auto p-1">
+        <!-- Populated dynamically per sheet -->
+      </div>
+    </div>
+
+    <!-- Live Summary Stats Footer -->
+    <div class="mt-5 pt-4 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-4 text-xs text-zinc-300 bg-zinc-950/60 px-4 py-3 rounded-xl">
+      <div>Total Tokens: <b id="stat-total-tokens" class="text-yellow-400 text-sm">400</b></div>
+      <div>Total Cash Value: <b id="stat-total-cash" class="text-emerald-400 text-sm">₹10,500</b></div>
+      <div>Grid Layout: <b id="stat-grid-type" class="text-white">2 × 5 (10/page)</b></div>
+      <div>Physical A4 Sheets: <b id="stat-total-sheets" class="text-yellow-400 text-sm">40 Sheets (80 Duplex Pages)</b></div>
+      <div>Winning Sheets: <b id="stat-winner-count" class="text-amber-400 text-sm">1 Winner / 39 Decoys</b></div>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       GENERATED A4 SHEETS PREVIEW & PRINT CONTAINER
+       ========================================================= -->
+  <main id="print-container" class="flex flex-col items-center gap-6 px-4">
+    <!-- Sheets injected dynamically -->
+  </main>
+
+  <!-- =========================================================
+       APPLICATION ENGINE SCRIPT
+       ========================================================= -->
+  <script>
+    // Token metadata lookup
+    const TOKEN_TIERS = [
+      { value: 5,  symbol: '₹5',  words: 'Five Rupees',   prefix: 'YH-05', css: 'token-val-5',  inputId: 'quota-5',  valId: 'val-5'  },
+      { value: 10, symbol: '₹10', words: 'Ten Rupees',    prefix: 'YH-10', css: 'token-val-10', inputId: 'quota-10', valId: 'val-10' },
+      { value: 30, symbol: '₹30', words: 'Thirty Rupees', prefix: 'YH-30', css: 'token-val-30', inputId: 'quota-30', valId: 'val-30' },
+      { value: 60, symbol: '₹60', words: 'Sixty Rupees',  prefix: 'YH-60', css: 'token-val-60', inputId: 'quota-60', valId: 'val-60' }
+    ];
+
+    // Generate a built-in high-contrast Rengoku Flame artwork fallback so export works even if rengoku.jpg isn't on disk
+    function createFlameFallbackDataUrl() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1050;
+      canvas.height = 1485;
+      const ctx = canvas.getContext('2d');
+
+      // Deep fiery background gradient
+      const radGrad = ctx.createRadialGradient(525, 700, 80, 525, 740, 900);
+      radGrad.addColorStop(0, '#fff7ed');
+      radGrad.addColorStop(0.2, '#facc15');
+      radGrad.addColorStop(0.5, '#ea580c');
+      radGrad.addColorStop(0.8, '#991b1b');
+      radGrad.addColorStop(1, '#180402');
+      ctx.fillStyle = radGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Dynamic flame rings & sun-breathing slashes
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.35)';
+      ctx.lineWidth = 10;
+      for (let r = 120; r < 850; r += 110) {
+        ctx.beginPath();
+        ctx.arc(525, 742, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Stylized Flame Emblem in Center
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      ctx.fillRect(140, 580, 770, 320);
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(140, 580, 770, 320);
+
+      ctx.fillStyle = '#facc15';
+      ctx.font = '900 68px Impact, Segoe UI, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('FLAME HASHIRA: RENGOKU', 525, 710);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '800 38px Segoe UI, sans-serif';
+      ctx.fillText('YELLOW HOUSE • 14 NOV CHILDREN\'S DAY FAIR', 525, 795);
+
+      return canvas.toDataURL('image/jpeg', 0.92);
+    }
+
+    // State: Pool of uploaded anime images
+    let imagePool = [
+      {
+        id: 'img-default-1',
+        name: 'rengoku.jpg (Flame Hashira Default)',
+        url: createFlameFallbackDataUrl(),
+        orientation: 'portrait', // 'portrait' -> bottom quote bar | 'landscape' -> left quote bar
+        quote: 'SET YOUR HEART ABLAZE! GO BEYOND YOUR LIMITS'
+      }
+    ];
+
+    // If local rengoku.jpg exists in the same folder, load it into default slot 1
+    (function tryLoadLocalRengoku() {
+      const testImg = new Image();
+      testImg.onload = function() {
+        const isLandscape = testImg.naturalWidth > testImg.naturalHeight;
+        imagePool[0].url = 'rengoku.jpg';
+        imagePool[0].orientation = isLandscape ? 'landscape' : 'portrait';
+        renderImagePoolUI();
+        renderSheetsOnly();
+      };
+      testImg.src = 'rengoku.jpg';
+    })();
+
+    // State: Per-sheet settings { imageIndex, isWinner }
+    let sheetConfigs = [];
+    // State: Shuffled token pool
+    let currentTokenPool = [];
+
+    // Fisher-Yates unbiased shuffle
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Build & shuffle the token pool from current quota inputs
+    function rebuildAndShuffleTokenPool() {
+      const pool = [];
+      TOKEN_TIERS.forEach(tier => {
+        const qty = Math.max(0, parseInt(document.getElementById(tier.inputId).value, 10) || 0);
+        document.getElementById(tier.valId).textContent = '₹' + (qty * tier.value).toLocaleString('en-IN');
+
+        for (let s = 1; s <= qty; s++) {
+          pool.push({
+            value: tier.value,
+            symbol: tier.symbol,
+            words: tier.words,
+            serial: `${tier.prefix}-${String(s).padStart(3, '0')}`,
+            css: tier.css
+          });
+        }
+      });
+
+      currentTokenPool = shuffleArray(pool);
+      syncSheetConfigsCount();
+      renderImagePoolUI();
+      renderSheetAssignmentUI();
+      renderSheetsOnly();
+    }
+
+    // Ensure sheetConfigs array matches current number of required A4 sheets
+    function syncSheetConfigsCount() {
+      const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
+      const totalSheets = Math.ceil(currentTokenPool.length / tokensPerPage);
+
+      while (sheetConfigs.length < totalSheets) {
+        const idx = sheetConfigs.length;
+        sheetConfigs.push({
+          imageIndex: idx % imagePool.length,
+          isWinner: idx === 0 // Default: Sheet #1 is Winner, others are Decoys
+        });
+      }
+      if (sheetConfigs.length > totalSheets) {
+        sheetConfigs.length = totalSheets;
+      }
+      // Make sure imageIndex is valid
+      sheetConfigs.forEach((cfg, idx) => {
+        if (cfg.imageIndex >= imagePool.length) {
+          cfg.imageIndex = idx % imagePool.length;
+        }
+      });
+    }
+
+    // Format the Dual-End Verification Quote Strip text
+    function formatQuoteForSheet(rawQuote, isWinner) {
+      // Strip trailing punctuation so we can attach the exact cipher punctuation
+      const cleaned = (rawQuote || 'SET YOUR HEART ABLAZE')
+        .trim()
+        .replace(/[.!★]+$/g, '')
+        .trim();
+
+      const chapterCode = isWinner ? '[CH. 14]' : '[CH. 11]';
+      const endPunctuation = isWinner ? '!' : '.';
+
+      return {
+        chapterCode,
+        fullQuote: `"${cleaned}${endPunctuation}"`
+      };
+    }
+
+    // Render the Image Pool UI cards
+    function renderImagePoolUI() {
+      const listEl = document.getElementById('image-pool-list');
+      listEl.innerHTML = '';
+
+      imagePool.forEach((img, idx) => {
+        const card = document.createElement('div');
+        card.className = 'bg-zinc-950/90 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-3';
+
+        const orientBadge = img.orientation === 'portrait'
+          ? '📐 Portrait (Bottom Bar)'
+          : '📐 Landscape (Left Bar)';
+
+        card.innerHTML = `
+          <img src="${img.url}" alt="${img.name}" class="w-12 h-14 object-cover rounded-lg border border-zinc-700 flex-shrink-0"/>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="text-xs font-black text-yellow-400 truncate">#${idx + 1}: ${img.name}</span>
+              <button data-idx="${idx}" class="toggle-orient-btn px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-[10px] font-bold text-zinc-300 border border-zinc-700 flex-shrink-0">
+                ${orientBadge}
+              </button>
+            </div>
+            <input
+              type="text"
+              data-idx="${idx}"
+              value="${img.quote.replace(/"/g, '&quot;')}"
+              placeholder="Enter anime quote for this image..."
+              class="img-quote-input w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-yellow-400"
+            />
+          </div>
+          ${imagePool.length > 1 ? `
+            <button data-idx="${idx}" class="remove-img-btn text-zinc-500 hover:text-rose-400 font-black text-sm px-1.5" title="Remove Image">✕</button>
+          ` : ''}
+        `;
+        listEl.appendChild(card);
+      });
+
+      // Bind orientation toggles
+      listEl.querySelectorAll('.toggle-orient-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const i = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
+          imagePool[i].orientation = imagePool[i].orientation === 'portrait' ? 'landscape' : 'portrait';
+          renderImagePoolUI();
+          renderSheetsOnly();
+        });
+      });
+
+      // Bind quote text live edits
+      listEl.querySelectorAll('.img-quote-input').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const i = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
+          imagePool[i].quote = e.currentTarget.value;
+          renderSheetsOnly();
+        });
+      });
+
+      // Bind image deletion
+      listEl.querySelectorAll('.remove-img-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const i = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
+          if (imagePool.length > 1) {
+            imagePool.splice(i, 1);
+            syncSheetConfigsCount();
+            renderImagePoolUI();
+            renderSheetAssignmentUI();
+            renderSheetsOnly();
+          }
+        });
+      });
+    }
+
+    // Render the Per-Sheet Winner/Decoy & Image Selector Grid
+    function renderSheetAssignmentUI() {
+      const gridEl = document.getElementById('sheet-assignment-grid');
+      gridEl.innerHTML = '';
+
+      sheetConfigs.forEach((cfg, sIdx) => {
+        const box = document.createElement('div');
+        box.className = `rounded-xl p-2 border transition flex flex-col justify-between gap-1.5 ${
+          cfg.isWinner
+            ? 'bg-amber-500/15 border-amber-400/60'
+            : 'bg-zinc-950/80 border-zinc-800'
+        }`;
+
+        const optionsHtml = imagePool.map((im, iIdx) =>
+          `<option value="${iIdx}" ${cfg.imageIndex === iIdx ? 'selected' : ''}>Img #${iIdx + 1}: ${im.name.slice(0, 14)}</option>`
+        ).join('');
+
+        box.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-black text-zinc-300">Sheet #${sIdx + 1}</span>
+            <button data-sidx="${sIdx}" class="sheet-win-toggle px-2 py-0.5 rounded text-[10px] font-black uppercase transition ${
+              cfg.isWinner
+                ? 'bg-amber-400 text-zinc-950 shadow'
+                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+            }">
+              ${cfg.isWinner ? '🏆 WINNER [14!]' : '🎭 DECOY [11.]'}
+            </button>
+          </div>
+          <select data-sidx="${sIdx}" class="sheet-img-select w-full bg-zinc-900 border border-zinc-700 rounded px-1.5 py-1 text-[10px] font-bold text-zinc-200 focus:outline-none">
+            ${optionsHtml}
+          </select>
+        `;
+        gridEl.appendChild(box);
+      });
+
+      // Bind Winner/Decoy toggles
+      gridEl.querySelectorAll('.sheet-win-toggle').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const sIdx = parseInt(e.currentTarget.getAttribute('data-sidx'), 10);
+          sheetConfigs[sIdx].isWinner = !sheetConfigs[sIdx].isWinner;
+          renderSheetAssignmentUI();
+          renderSheetsOnly();
+        });
+      });
+
+      // Bind per-sheet image dropdown
+      gridEl.querySelectorAll('.sheet-img-select').forEach(sel => {
+        sel.addEventListener('change', (e) => {
+          const sIdx = parseInt(e.currentTarget.getAttribute('data-sidx'), 10);
+          sheetConfigs[sIdx].imageIndex = parseInt(e.currentTarget.value, 10) || 0;
+          renderSheetsOnly();
+        });
+      });
+    }
+
+    // Render the A4 Front & Back Sheets into #print-container
+    function renderSheetsOnly() {
+      const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
+      const rows = tokensPerPage / 2;
+      const rowHeightMm = 297 / rows;
+
+      // Update CSS variables for dynamic grid sizing
+      document.documentElement.style.setProperty('--rows', rows);
+      if (tokensPerPage >= 14) {
+        document.documentElement.style.setProperty('--denom-size', '22pt');
+        document.documentElement.style.setProperty('--pad-v', '2.2mm');
+      } else if (tokensPerPage === 12) {
+        document.documentElement.style.setProperty('--denom-size', '26pt');
+        document.documentElement.style.setProperty('--pad-v', '3mm');
+      } else {
+        document.documentElement.style.setProperty('--denom-size', '30pt');
+        document.documentElement.style.setProperty('--pad-v', '4mm');
+      }
+
+      const totalTokens = currentTokenPool.length;
+      const totalSheets = Math.ceil(totalTokens / tokensPerPage);
+      const totalCash = currentTokenPool.reduce((acc, t) => acc + t.value, 0);
+      const winnerCount = sheetConfigs.filter(c => c.isWinner).length;
+      const decoyCount = totalSheets - winnerCount;
+
+      // Update Summary Bar
+      document.getElementById('stat-total-tokens').textContent = totalTokens;
+      document.getElementById('stat-total-cash').textContent = '₹' + totalCash.toLocaleString('en-IN');
+      document.getElementById('stat-grid-type').textContent = `2 × ${rows} (${tokensPerPage}/page)`;
+      document.getElementById('stat-total-sheets').textContent = `${totalSheets} Sheets (${totalSheets * 2} Duplex Pages)`;
+      document.getElementById('stat-winner-count').textContent = `${winnerCount} Winner / ${decoyCount} Decoys`;
+
+      const container = document.getElementById('print-container');
+      container.innerHTML = '';
+
+      if (totalTokens === 0) {
+        container.innerHTML = '<div class="py-16 text-zinc-500 font-bold">Set at least one token quota above zero to generate sheets.</div>';
+        return;
+      }
+
+      for (let sIdx = 0; sIdx < totalSheets; sIdx++) {
+        const sheetTokens = currentTokenPool.slice(sIdx * tokensPerPage, (sIdx + 1) * tokensPerPage);
+        const cfg = sheetConfigs[sIdx] || { imageIndex: 0, isWinner: false };
+        const imgObj = imagePool[cfg.imageIndex] || imagePool[0];
+        const quoteData = formatQuoteForSheet(imgObj.quote, cfg.isWinner);
+
+        // --- META LABEL FOR FRONT SHEET ---
+        const frontMeta = document.createElement('div');
+        frontMeta.className = 'sheet-meta-bar text-xs font-bold text-zinc-400 uppercase tracking-wider -mb-4 mt-2';
+        frontMeta.innerHTML = `Sheet #${sIdx + 1} of ${totalSheets} — <span class="text-yellow-400">FRONT (Random Mix Tokens)</span>`;
+        container.appendChild(frontMeta);
+
+        // --- PAGE 1: FRONT TOKENS ---
+        const frontSheet = document.createElement('div');
+        frontSheet.className = 'a4-sheet';
+
+        for (let slot = 0; slot < tokensPerPage; slot++) {
+          const t = sheetTokens[slot];
+          const cell = document.createElement('div');
+          if (t) {
+            cell.className = `token-front ${t.css}`;
+            cell.innerHTML = `
+              <div class="token-header">
+                <span class="house-badge">★ Yellow House</span>
+                <span class="event-pill">14 Nov Fair</span>
+              </div>
+              <div class="token-body">
+                <div class="token-symbol">${t.symbol}</div>
+                <div class="token-words">${t.words}</div>
+              </div>
+              <div class="token-footer">
+                <span>ID: ${t.serial}</span>
+                <span>Single Use Only</span>
+              </div>
+            `;
+          } else {
+            cell.className = 'token-front token-empty';
+            cell.textContent = 'Blank / Spare Slot';
+          }
+          frontSheet.appendChild(cell);
+        }
+        container.appendChild(frontSheet);
+
+        // --- META LABEL FOR BACK SHEET ---
+        const backMeta = document.createElement('div');
+        backMeta.className = 'sheet-meta-bar text-xs font-bold text-zinc-400 uppercase tracking-wider -mb-4 mt-2';
+        backMeta.innerHTML = `Sheet #${sIdx + 1} of ${totalSheets} — <span class="text-emerald-400">BACK (${imgObj.name} • ${imgObj.orientation.toUpperCase()} • ${cfg.isWinner ? '🏆 WINNER [CH. 14 !]' : '🎭 DECOY [CH. 11 .]'})</span>`;
+        container.appendChild(backMeta);
+
+        // --- PAGE 2: BACK SLICED ANIME PUZZLE + AUTO QUOTE BAR ---
+        const backSheet = document.createElement('div');
+        backSheet.className = 'a4-sheet puzzle-back';
+
+        for (let tileIdx = 0; tileIdx < tokensPerPage; tileIdx++) {
+          const col = tileIdx % 2;
+          const row = Math.floor(tileIdx / 2);
+          const posX = -(col * 105);
+          const posY = -(row * rowHeightMm);
+
+          const tile = document.createElement('div');
+          tile.className = 'puzzle-tile';
+          tile.style.backgroundImage = `url('${imgObj.url}')`;
+          tile.style.backgroundPosition = `${posX}mm ${posY.toFixed(2)}mm`;
+          backSheet.appendChild(tile);
+        }
+
+        // Smart Orientation Quote Strip (Bottom for Portrait, Left for Landscape)
+        const quoteBar = document.createElement('div');
+        const stripPositionClass = imgObj.orientation === 'landscape'
+          ? 'quote-strip-left'
+          : 'quote-strip-bottom';
+
+        quoteBar.className = `manga-quote-strip ${stripPositionClass}`;
+        quoteBar.innerHTML = `
+          <span class="chapter-tag">${quoteData.chapterCode}</span>
+          <span class="quote-text-body">${quoteData.fullQuote}</span>
+        `;
+        backSheet.appendChild(quoteBar);
+
+        container.appendChild(backSheet);
+      }
+    }
+
+    // Handle multi-file upload with automatic Portrait vs Landscape orientation detection
+    document.getElementById('multi-image-input').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+
+      let loadedCount = 0;
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const dataUrl = evt.target.result;
+          const probe = new Image();
+          probe.onload = function() {
+            const isLandscape = probe.naturalWidth > probe.naturalHeight;
+            imagePool.push({
+              id: 'img-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+              name: file.name,
+              url: dataUrl,
+              orientation: isLandscape ? 'landscape' : 'portrait',
+              quote: 'SET YOUR HEART ABLAZE! GO BEYOND YOUR LIMITS'
+            });
+            loadedCount++;
+            if (loadedCount === files.length) {
+              // Automatically cycle newly uploaded images across all sheets
+              sheetConfigs.forEach((cfg, idx) => {
+                cfg.imageIndex = idx % imagePool.length;
+              });
+              renderImagePoolUI();
+              renderSheetAssignmentUI();
+              renderSheetsOnly();
+            }
+          };
+          probe.src = dataUrl;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    // Helper: Capture all .a4-sheet elements as JPEG Data URLs with live progress
+    async function captureAllSheetsAsImages(statusPrefix) {
+      const sheetEls = Array.from(document.querySelectorAll('.a4-sheet'));
+      const statusBox = document.getElementById('export-status');
+      const statusText = document.getElementById('export-status-text');
+      const statusPct = document.getElementById('export-status-pct');
+
+      statusBox.classList.remove('hidden');
+      const captured = [];
+
+      for (let i = 0; i < sheetEls.length; i++) {
+        const pct = Math.round(((i + 1) / sheetEls.length) * 100);
+        statusText.textContent = `${statusPrefix}: Rendering page ${i + 1} of ${sheetEls.length}...`;
+        statusPct.textContent = `${pct}%`;
+
+        const canvas = await html2canvas(sheetEls[i], {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+        captured.push(canvas.toDataURL('image/jpeg', 0.92));
+      }
+
+      statusBox.classList.add('hidden');
+      return captured;
+    }
+
+    // Export to PDF (.pdf)
+    document.getElementById('btn-pdf').addEventListener('click', async () => {
+      try {
+        const images = await captureAllSheetsAsImages('Building PDF');
+        if (!images.length) return;
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        images.forEach((imgData, idx) => {
+          if (idx > 0) pdf.addPage('a4', 'portrait');
+          pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+        });
+
+        pdf.save('Yellow_House_14Nov_Tokens.pdf');
+      } catch (err) {
+        console.error('PDF export error:', err);
+      }
+    });
+
+    // Base64 helper for docx ImageRun
+    function dataURLToUint8Array(dataURL) {
+      const base64 = dataURL.split(',')[1];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    // Export to Word (.docx) with zero margins and exact A4 sizing
+    document.getElementById('btn-docx').addEventListener('click', async () => {
+      try {
+        const images = await captureAllSheetsAsImages('Building Word DOCX');
+        if (!images.length) return;
+
+        const { Document, Packer, Paragraph, ImageRun } = window.docx;
+
+        const children = images.map((imgData) => {
+          return new Paragraph({
+            spacing: { before: 0, after: 0, line: 240 },
+            children: [
+              new ImageRun({
+                data: dataURLToUint8Array(imgData),
+                transformation: {
+                  width: 794,  // 210mm at 96 DPI
+                  height: 1123 // 297mm at 96 DPI
+                }
+              })
+            ]
+          });
+        });
+
+        const doc = new Document({
+          sections: [
+            {
+              properties: {
+                page: {
+                  size: { width: 11906, height: 16838 }, // Exact A4 in twips
+                  margin: { top: 0, right: 0, bottom: 0, left: 0 }
+                }
+              },
+              children
+            }
+          ]
+        });
+
+        const blob = await Packer.toBlob(doc);
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Yellow_House_14Nov_Tokens.docx';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (err) {
+        console.error('DOCX export error:', err);
+      }
+    });
+
+    // Event bindings for top controls
+    document.getElementById('btn-shuffle').addEventListener('click', rebuildAndShuffleTokenPool);
+    document.getElementById('btn-print').addEventListener('click', () => window.print());
+
+    document.getElementById('tokens-per-page').addEventListener('change', () => {
+      syncSheetConfigsCount();
+      renderSheetAssignmentUI();
+      renderSheetsOnly();
+    });
+
+    ['quota-5', 'quota-10', 'quota-30', 'quota-60'].forEach(id => {
+      document.getElementById(id).addEventListener('change', rebuildAndShuffleTokenPool);
+    });
+
+    document.getElementById('btn-all-decoy').addEventListener('click', () => {
+      sheetConfigs.forEach((cfg, idx) => { cfg.isWinner = (idx === 0); });
+      renderSheetAssignmentUI();
+      renderSheetsOnly();
+    });
+
+    document.getElementById('btn-all-winner').addEventListener('click', () => {
+      sheetConfigs.forEach((cfg) => { cfg.isWinner = true; });
+      renderSheetAssignmentUI();
+      renderSheetsOnly();
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      document.getElementById('tokens-per-page').value = '10';
+      document.getElementById('quota-5').value = 100;
+      document.getElementById('quota-10').value = 100;
+      document.getElementById('quota-30').value = 100;
+      document.getElementById('quota-60').value = 100;
+      sheetConfigs = [];
+      rebuildAndShuffleTokenPool();
+    });
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', rebuildAndShuffleTokenPool);
+  </script>
+</body>
+</html>
