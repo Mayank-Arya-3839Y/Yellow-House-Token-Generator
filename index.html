@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yellow House Food Token Print Engine — 14 Nov Fair</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Export Libraries: html2canvas, jsPDF, and docx -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+
+  <style>
+    :root {
+      --rows: 5;
+      --row-height: calc(297mm / var(--rows));
+      --item-font-size: 17pt;
+      --price-font-size: 31pt;
+      --words-font-size: 10.5pt;
+      --corner-house-size: 14.5pt;
+      --corner-pill-size: 12pt;
+      --corner-footer-size: 12pt;
+      --pad-v: 2.8mm;
+      --wm-opacity: 0.35;
+      --wm-size: 64mm;
+      --back-id-size: 20pt;
+      --sunflower-base: #FFD700;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background-color: #111115;
+      color: #f4f4f5;
+    }
+
+    /* =========================================================
+       A4 SHEET DIMENSIONS & DYNAMIC GRID
+       ========================================================= */
+    .a4-sheet {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      background: #ffffff;
+      color: #000000;
+      display: grid;
+      grid-template-columns: 105mm 105mm;
+      grid-template-rows: repeat(var(--rows), var(--row-height));
+      page-break-after: always;
+      break-after: page;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    /* Cheat Sheet Layout */
+    .a4-cheat-sheet {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      background: #ffffff;
+      color: #000000;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      page-break-after: always;
+      break-after: page;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    /* =========================================================
+       UNIFORM CLASSIC SUNFLOWER (#FFD700) FOOD TOKEN CELL (FRONT)
+       ========================================================= */
+    .token-card {
+      width: 105mm;
+      height: var(--row-height);
+      border: 1px dashed #92400e;
+      padding: 2mm;
+      position: relative;
+      overflow: hidden;
+      background-color: #FFD700;
+      background-image: radial-gradient(circle at 50% 48%, #fff176 0%, #FFD700 58%, #f5b700 100%);
+    }
+
+    /* Crisp Inner Rounded-Rectangle Frame */
+    .token-inner-frame {
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(146, 64, 14, 0.48);
+      border-radius: 5px;
+      padding: var(--pad-v) 4.2mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .token-empty {
+      background: #fff9c4;
+      border: 1px dashed #b45309;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #92400e;
+      font-size: 8pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Center Background Watermark Container */
+    .token-watermark {
+      position: absolute;
+      top: 52%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: var(--wm-size);
+      height: var(--wm-size);
+      opacity: var(--wm-opacity);
+      pointer-events: none;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .token-watermark svg,
+    .token-watermark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.18));
+    }
+
+    /* Token Header */
+    .token-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid #78350f;
+      padding-bottom: 1.2mm;
+      position: relative;
+      z-index: 5;
+    }
+
+    .house-badge {
+      font-size: var(--corner-house-size);
+      font-weight: 900;
+      color: #451a03;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .event-pill {
+      font-size: var(--corner-pill-size);
+      font-weight: 900;
+      color: #ffffff;
+      background: #78350f;
+      padding: 1.8px 7px;
+      border-radius: 3.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Token Foreground Body */
+    .token-body {
+      text-align: center;
+      margin: auto 0;
+      position: relative;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .food-title {
+      font-size: var(--item-font-size);
+      font-weight: 900;
+      color: #111111;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      line-height: 1.1;
+      background: rgba(255, 253, 240, 0.88);
+      padding: 1mm 3.8mm;
+      border-radius: 4px;
+      border: 1px solid rgba(146, 64, 14, 0.38);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .price-figure {
+      font-size: var(--price-font-size);
+      font-weight: 900;
+      color: #78350f;
+      line-height: 0.96;
+      margin-top: 0.8mm;
+      letter-spacing: -0.5px;
+      text-shadow:
+        1.5px 1.5px 0px #ffffff,
+        -1.5px -1.5px 0px #ffffff,
+        1.5px -1.5px 0px #ffffff,
+        -1.5px 1.5px 0px #ffffff,
+        0px 1.5px 0px #ffffff,
+        0px -1.5px 0px #ffffff,
+        1.5px 0px 0px #ffffff,
+        -1.5px 0px 0px #ffffff,
+        0 2px 5px rgba(0, 0, 0, 0.16);
+    }
+
+    .price-words {
+      font-size: var(--words-font-size);
+      font-weight: 900;
+      letter-spacing: 1.3px;
+      color: #1c1917;
+      text-transform: uppercase;
+      margin-top: 0.7mm;
+      text-shadow: 0 0 4px rgba(255, 255, 255, 0.95);
+    }
+
+    /* Token Footer */
+    .token-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: var(--corner-footer-size);
+      font-weight: 900;
+      color: #291502;
+      border-top: 1.5px dashed #78350f;
+      padding-top: 1.2mm;
+      position: relative;
+      z-index: 5;
+    }
+
+    /* =========================================================
+       BACK-SIDE TOKEN CELL (PALE YELLOW + FULL NEHRU PHOTO + MIRRORED ID)
+       ========================================================= */
+    .token-card-back {
+      width: 105mm;
+      height: var(--row-height);
+      border: 1px dashed #b45309;
+      padding: 2mm;
+      position: relative;
+      overflow: hidden;
+      background-color: #fef9c3;
+      background-image: radial-gradient(circle at 60% 45%, #fffef0 0%, #fef9c3 65%, #fde047 100%);
+    }
+
+    .token-back-inner {
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(146, 64, 14, 0.45);
+      border-radius: 5px;
+      padding: var(--pad-v) 3.6mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Split Upper Section: Left Tribute Typography + Right Seamless Nehru Photo */
+    .back-split-top {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2mm;
+      min-height: 0;
+      z-index: 2;
+    }
+
+    .back-tribute-left {
+      flex: 1.25;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      text-align: left;
+      padding-left: 0.8mm;
+    }
+
+    .tribute-tag {
+      font-size: calc(var(--corner-pill-size) * 0.82);
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      line-height: 1.05;
+    }
+
+    .tribute-sub {
+      font-size: calc(var(--words-font-size) * 0.65);
+      font-weight: 800;
+      color: #57534e;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      margin-top: 0.6mm;
+      line-height: 1.1;
+    }
+
+    .tribute-name {
+      font-size: calc(var(--item-font-size) * 0.66);
+      font-weight: 900;
+      font-family: Georgia, 'Times New Roman', serif;
+      color: #9a3412;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+      margin-top: 0.5mm;
+      line-height: 1.05;
+    }
+
+    .tribute-dates {
+      font-size: calc(var(--words-font-size) * 0.62);
+      font-weight: 700;
+      color: #78716c;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-top: 0.5mm;
+    }
+
+    .token-back-portrait {
+      width: calc(var(--wm-size) * 0.68);
+      height: calc(var(--wm-size) * 0.60);
+      max-height: 98%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      border-radius: 6px;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .token-back-portrait img,
+    .token-back-portrait svg {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+    }
+
+    /* Bottom Center Dynamic ID + Unique Red-ID Nehru Fact (Full Clean Multi-Line, No Ellipsis) */
+    .back-bottom-bar {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-top: 1px dashed rgba(146, 64, 14, 0.45);
+      padding-top: 0.8mm;
+      margin-top: 0.5mm;
+      z-index: 3;
+    }
+
+    .back-id-pill {
+      font-size: var(--back-id-size);
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      line-height: 1.02;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1.5px solid rgba(146, 64, 14, 0.5);
+      padding: 0.45mm 3.2mm;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .back-nehru-fact {
+      font-size: calc(var(--words-font-size) * 0.62);
+      font-weight: 800;
+      color: #991b1b;
+      background: rgba(254, 226, 226, 0.94);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      border-radius: 3.5px;
+      padding: 0.4mm 2mm;
+      margin-top: 0.5mm;
+      text-align: center;
+      width: 99%;
+      white-space: normal;
+      overflow: visible;
+      word-wrap: break-word;
+      line-height: 1.15;
+    }
+
+    /* Secret Winner Star */
+    .secret-star {
+      color: #d97706;
+      font-size: 0.95em;
+      margin-left: 3px;
+      text-shadow: 0 0 2px #ffffff;
+    }
+
+    /* Rule Poster Modal */
+    #poster-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.92);
+      z-index: 9999;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    #poster-content {
+      background: #FFD700;
+      background-image: radial-gradient(circle at 50% 45%, #fff176 0%, #FFD700 60%, #f5b700 100%);
+      width: 210mm;
+      min-height: 297mm;
+      padding: 12mm;
+      border: 4px solid #78350f;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.65);
+      position: relative;
+      color: #451a03;
+    }
+
+    /* Print Media Query */
+    @media print {
+      body {
+        background: transparent !important;
+      }
+      #control-panel,
+      .sheet-meta-bar {
+        display: none !important;
+      }
+      #print-container {
+        padding: 0 !important;
+        gap: 0 !important;
+      }
+      .a4-sheet,
+      .a4-cheat-sheet {
+        margin: 0 !important;
+        box-shadow: none !important;
+      }
+      body.print-poster #print-container { display: none !important; }
+      body.print-poster #poster-modal { display: flex !important; position: static; background: transparent; padding: 0; }
+      body.print-poster #poster-content { box-shadow: none; border: none; }
+      body.print-poster #poster-toolbar { display: none !important; }
+    }
+  </style>
+</head>
+<body class="pb-20">
+
+  <!-- =========================================================
+       ANIME PUZZLE QUEST RULE POSTER MODAL
+       ========================================================= -->
+  <div id="poster-modal" class="flex-col">
+    <div id="poster-toolbar" class="mb-4 flex gap-4 sticky top-0 z-50 bg-zinc-900/90 px-5 py-3 rounded-2xl border border-yellow-500/40 backdrop-blur">
+      <button id="print-poster-btn" class="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black rounded-xl shadow-lg uppercase tracking-wide text-sm">
+        🖨️ Print Rule Poster (A4)
+      </button>
+      <button id="close-poster" class="px-6 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white font-bold rounded-xl uppercase shadow-lg text-sm">
+        ✕ Close Poster
+      </button>
+    </div>
+
+    <div id="poster-content" class="flex flex-col">
+      <div class="border-4 border-dashed border-[#92400e] p-8 h-full flex flex-col justify-between rounded-2xl flex-grow bg-white/15">
+        <div class="text-center">
+          <div class="inline-block bg-[#78350f] text-yellow-300 text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full mb-2">
+            14 NOV CHILDREN'S DAY FAIR &bull; OFFICIAL STALL GAME
+          </div>
+          <h1 class="text-6xl font-black mb-2 tracking-tight" style="color: #451a03; text-shadow: 2px 2px 0px #fff;">
+            🌻 YELLOW HOUSE
+          </h1>
+          <h2 class="text-3xl font-black bg-[#78350f] text-white inline-block px-6 py-2 rounded-xl shadow-md">
+            ANIME PUZZLE &amp; RED-ID QUEST!
+          </h2>
+          <p class="mt-3 text-xl font-black text-[#451a03]">
+            Eat Delicious Food &bull; Collect Tokens &bull; Trade Pieces &bull; Win Prizes!
+          </p>
+        </div>
+
+        <div class="my-6 flex flex-col gap-5">
+          <div class="bg-white/85 p-5 rounded-xl border-2 border-[#92400e] shadow-sm">
+            <h3 class="text-xl font-black mb-1 flex items-center gap-2 text-[#451a03]">
+              <span>🍲</span> STEP 1: GRAB A BITE &amp; GET STAMPED
+            </h3>
+            <p class="text-base font-bold text-[#78350f] leading-snug">
+              Buy any food token (from ₹5 Lucky Bite up to ₹60 Full Momo). Hand it to the food counter to get your meal and an official stamp on the front—then <b>keep your token!</b>
+            </p>
+          </div>
+
+          <div class="bg-white/85 p-5 rounded-xl border-2 border-[#92400e] shadow-sm">
+            <h3 class="text-xl font-black mb-1 flex items-center gap-2 text-[#451a03]">
+              <span>🔄</span> STEP 2: TRADE &amp; BUILD THE 12-PIECE ANIME PUZZLE
+            </h3>
+            <p class="text-base font-bold text-[#78350f] leading-snug">
+              Each token is 1 piece of a <b>12-piece (2×6) A4 Anime Sheet</b> featuring <b>Demon Slayer, Jujutsu Kaisen, or Naruto</b>. Trade tokens with your friends across the fairgrounds to complete a full 12-piece picture!
+            </p>
+          </div>
+
+          <div class="bg-red-50/95 p-5 rounded-xl border-2 border-red-600 shadow-sm">
+            <h3 class="text-xl font-black text-red-700 mb-1 flex items-center gap-2">
+              <span>🚨</span> STEP 3: WATCH OUT FOR DECOY QUOTES!
+            </h3>
+            <p class="text-base font-bold text-red-900 leading-snug">
+              Inspect the famous Anime quote carefully (e.g., Rengoku's <i>"Set your heart ablaze!"</i>). On <b>Decoy Pages</b>, the font is oversized so corner letters get cut off (like <i>"et your heart ablaz"</i>). Only complete, uncut quotes win!
+            </p>
+          </div>
+
+          <div class="bg-white/85 p-5 rounded-xl border-2 border-[#92400e] shadow-sm">
+            <h3 class="text-xl font-black mb-1.5 flex items-center gap-2 text-[#451a03]">
+              <span>🎁</span> STEP 4: CLAIM YOUR REWARDS!
+            </h3>
+            <ul class="text-base font-bold text-[#78350f] list-disc pl-6 space-y-1">
+              <li><b>1 Complete Winning Sheet (12 Tokens):</b> Instant Standard Prize!</li>
+              <li><b>THE GRAND PRIZE (5 Sheets = 60 Tokens of 1 Anime):</b> Complete all 5 pictures of an Anime series to claim the Ultimate Grand Prize!</li>
+              <li class="text-red-700"><b>BONUS RED-ID LUCKY DRAW:</b> 50 tokens have a <b>CRIMSON RED ID</b>—and 20 secret Red IDs win instant bonus gifts or free food!</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="text-center border-t-2 border-dashed border-[#78350f] pt-3 text-sm font-black uppercase tracking-wider text-[#451a03]">
+          Verify your completed sets at the Yellow House Master Desk &bull; Happy Children's Day!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       CONTROL PANEL: MENU QUOTAS, SLIDERS, LOTTERY & EXPORTS
+       ========================================================= -->
+  <header id="control-panel" class="max-w-6xl mx-auto mt-4 mb-8 bg-zinc-900 border border-yellow-500/40 rounded-2xl p-6 shadow-2xl">
+    <!-- Top Header & Action Bar -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <span class="inline-block w-3.5 h-3.5 rounded-full bg-yellow-400 animate-pulse"></span>
+          <h1 class="text-2xl font-black tracking-tight text-yellow-400 uppercase">
+            Yellow House Food Token Print Engine
+          </h1>
+        </div>
+        <p class="text-xs text-zinc-400 mt-1">
+          400 Tokens (with ₹5 Lucky Bite) &bull; Double-Sided Mirrored Nehru Back &bull; 50 Red IDs (20 Secret ★ Winners) &bull; Instant 2D Canvas PDF &amp; DOCX
+        </p>
+      </div>
+
+      <!-- Action & Export Buttons -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <label class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 transition flex items-center gap-1.5 cursor-pointer" title="Select images_3.jpg from your device to lock the exact photo into Preview, PDF & DOCX">
+          <span id="nehru-photo-btn-label">📷 Load Nehru Photo (images_3.jpg)</span>
+          <input type="file" id="upload-nehru-photo-top" accept="image/*" class="hidden"/>
+        </label>
+        <button id="btn-shuffle" class="px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-yellow-400/20 transition flex items-center gap-1.5">
+          <span>🔀 Shuffle 400 &amp; Red IDs</span>
+        </button>
+        <button id="btn-poster" class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-purple-600/25 transition flex items-center gap-1.5">
+          <span>📜 Anime Rule Poster</span>
+        </button>
+        <button id="btn-reset" class="px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs uppercase border border-zinc-700 transition">
+          ↺ Reset Defaults
+        </button>
+        <button id="btn-pdf" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/25 transition flex items-center gap-1.5">
+          <span>⚡ Fast Export PDF (.pdf)</span>
+        </button>
+        <button id="btn-docx" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-600/25 transition flex items-center gap-1.5">
+          <span>⚡ Fast Export Word (.docx)</span>
+        </button>
+        <button id="btn-print" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/25 transition flex items-center gap-1.5">
+          <span>🖨️ Print (Ctrl+P)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Export Progress Notification Banner -->
+    <div id="export-status" class="hidden mt-4 bg-amber-500/15 border border-amber-400/50 rounded-xl p-3.5 flex flex-col gap-2 text-amber-300 text-xs font-bold">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 animate-spin text-amber-400" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span id="export-status-text">Pre-caching food templates &amp; compositing pages...</span>
+        </div>
+        <span id="export-status-pct" class="font-black text-sm">0%</span>
+      </div>
+      <div class="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
+        <div id="export-progress-bar" class="bg-yellow-400 h-full transition-all duration-150" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Grid Size, Watermark Opacity & Print Mode Controls -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5 bg-zinc-950/70 border border-zinc-800/90 rounded-xl p-4">
+      <div>
+        <label class="text-[11px] font-bold text-zinc-400 uppercase block mb-1.5">Tokens Per A4 Page (2 Columns × N Rows)</label>
+        <select id="tokens-per-page" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm font-black text-yellow-400 focus:outline-none focus:border-yellow-400 cursor-pointer">
+          <option value="8">8 Tokens / Page (2 × 4 Grid — 74.25mm tall)</option>
+          <option value="10" selected>10 Tokens / Page (2 × 5 Grid — 59.40mm tall)</option>
+          <option value="12">12 Tokens / Page (2 × 6 Puzzle Grid — 49.50mm tall)</option>
+          <option value="14">14 Tokens / Page (2 × 7 Grid — 42.43mm tall)</option>
+          <option value="16">16 Tokens / Page (2 × 8 Grid — 37.12mm tall)</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-[11px] font-bold text-zinc-400 uppercase">Food Watermark Opacity</label>
+          <span id="opacity-label" class="text-xs font-black text-yellow-400">35%</span>
+        </div>
+        <input type="range" id="watermark-opacity" min="10" max="75" value="35" class="w-full accent-yellow-400 cursor-pointer h-2 bg-zinc-800 rounded-lg"/>
+        <div class="flex justify-between text-[10px] text-zinc-500 mt-1">
+          <span>Subtle (10%)</span>
+          <span>Default (35%)</span>
+          <span>Bold (75%)</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col justify-between bg-zinc-900/90 border border-zinc-800 rounded-lg p-3">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-zinc-300 uppercase">Double-Sided Nehru Back</span>
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="toggle-backside" checked class="sr-only peer">
+            <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all relative peer-checked:bg-yellow-400"></div>
+          </label>
+        </div>
+        <div class="text-[10px] text-zinc-400 mt-1 leading-tight">
+          Split layout (Left Tribute Text + Right Nehru Photo + Bottom Center ID + <b>50 Unique Nehru Facts on Red IDs</b>).
+          <label class="inline-block mt-1 text-yellow-400 hover:underline cursor-pointer font-bold">
+            📷 Upload Custom Nehru Photo
+            <input type="file" id="upload-nehru-photo" accept="image/*" class="hidden"/>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Typography & Watermark Size Tuning Sliders (6 Sliders) -->
+    <div class="mt-4 bg-zinc-950/70 border border-yellow-500/30 rounded-xl p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-black uppercase tracking-wider text-yellow-400">
+            🎛️ Live Token Typography &amp; Element Size Sliders (6 Smart Adjusters)
+          </span>
+          <span class="text-[10px] bg-yellow-400/15 text-yellow-300 border border-yellow-400/30 px-2 py-0.5 rounded font-bold">
+            1:1 Sync Across Live Preview, PDF &amp; Word (.docx)
+          </span>
+        </div>
+        <button id="btn-reset-sliders" class="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-[11px] font-bold text-zinc-300 border border-zinc-700 transition">
+          ↺ Reset Sliders to 0
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+        <!-- Slider 1: Corner Labels -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-zinc-300 uppercase">1. Corner Labels</label>
+            <span id="val-adj-corner" class="text-xs font-black text-yellow-400">+0pt</span>
+          </div>
+          <input type="range" id="adj-corner" min="-4" max="8" step="0.5" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-500 mt-1">House, Date, ID &amp; Valid</div>
+        </div>
+
+        <!-- Slider 2: Food Item Title -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-zinc-300 uppercase">2. Dish Title</label>
+            <span id="val-adj-title" class="text-xs font-black text-yellow-400">+0pt</span>
+          </div>
+          <input type="range" id="adj-title" min="-5" max="10" step="0.5" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-500 mt-1">Center White Pill Text</div>
+        </div>
+
+        <!-- Slider 3: Price Figure (Rs) -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-zinc-300 uppercase">3. ₹ Price Figure</label>
+            <span id="val-adj-price" class="text-xs font-black text-yellow-400">+0pt</span>
+          </div>
+          <input type="range" id="adj-price" min="-8" max="16" step="1" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-500 mt-1">Main ₹5–₹60 Number</div>
+        </div>
+
+        <!-- Slider 4: Amount in Words -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-zinc-300 uppercase">4. Price in Words</label>
+            <span id="val-adj-words" class="text-xs font-black text-yellow-400">+0pt</span>
+          </div>
+          <input type="range" id="adj-words" min="-4" max="8" step="0.5" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-500 mt-1">FIVE / TEN RUPEES ONLY</div>
+        </div>
+
+        <!-- Slider 5: Background Food Image Size -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-zinc-300 uppercase">5. Dish Image Size</label>
+            <span id="val-adj-wmsize" class="text-xs font-black text-yellow-400">+0mm</span>
+          </div>
+          <input type="range" id="adj-wmsize" min="-20" max="25" step="1" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-500 mt-1">3D Watermark Scale</div>
+        </div>
+
+        <!-- Slider 6: Backside ID Font Scaler -->
+        <div class="bg-zinc-900/90 border border-yellow-500/40 rounded-lg p-2.5">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[10px] font-bold text-yellow-300 uppercase">6. Back-Side ID</label>
+            <span id="val-adj-backid" class="text-xs font-black text-yellow-400">+0pt</span>
+          </div>
+          <input type="range" id="adj-backid" min="-8" max="18" step="1" value="0" class="w-full accent-yellow-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"/>
+          <div class="text-[9px] text-zinc-400 mt-1">Nehru Back Mirrored ID</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Food Menu & Quota Controller (9 Items including ₹5 Lucky Bite = 400 Default Tokens) -->
+    <div class="mt-5">
+      <div class="flex items-center justify-between mb-2.5">
+        <h2 class="text-xs font-black uppercase tracking-wider text-yellow-400">
+          🍲 Yellow House Food Menu &amp; Token Quotas (9 Items = 400 Default Tokens &bull; Includes ₹5 "Lucky Bite" Leaf Dona Bowl)
+        </h2>
+        <span class="text-[11px] text-zinc-400">50 Red IDs (20 with ★ Secret Star) randomly assigned on shuffle</span>
+      </div>
+
+      <div id="menu-quota-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Dynamically populated by JS -->
+      </div>
+    </div>
+
+    <!-- Live Summary Stats Footer -->
+    <div class="mt-5 pt-4 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-4 text-xs text-zinc-300 bg-zinc-950/80 px-4 py-3 rounded-xl">
+      <div>Total Food Tokens: <b id="stat-total-tokens" class="text-yellow-400 text-sm">400</b></div>
+      <div>Total Revenue Value: <b id="stat-total-cash" class="text-emerald-400 text-sm">₹7,250</b></div>
+      <div>Red IDs / Secret ★ Winners: <b id="stat-red-winners" class="text-rose-400 text-sm">50 Red (20 ★)</b></div>
+      <div>Grid Layout: <b id="stat-grid-type" class="text-white">2 × 5 (10 tokens/page)</b></div>
+      <div>Total A4 Pages: <b id="stat-total-sheets" class="text-yellow-400 text-sm">81 Pages (Front + Back + Cheat Sheet)</b></div>
+      <div>Spare Blank Slots: <b id="stat-spare-slots" class="text-zinc-400">0</b></div>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       GENERATED A4 SHEETS PREVIEW & PRINT CONTAINER
+       ========================================================= -->
+  <main id="print-container" class="flex flex-col items-center gap-6 px-4">
+    <!-- Sheets injected dynamically -->
+  </main>
+
+  <!-- =========================================================
+       APPLICATION ENGINE & 3D REALISTIC FOOD + NEHRU SVG LIBRARY
+       ========================================================= -->
+  <script>
+    // =========================================================
+    // LOCAL NEHRU PHOTO PATH (SET YOUR LOCAL IMAGE FILENAME HERE)
+    // Put your photo in the same folder as this HTML file and set its name below:
+    // =========================================================
+    const NEHRU_IMAGE_PATH = "images.jpg";
+
+    // Rich, multi-layered 3D-shaded realistic vector SVG illustrations
+    const FOOD_SVGS = {
+      // ₹5 LUCKY BITE: Realistic 3D stitched Leaf Bowl ("Dona") filled with assorted leftover snack mix (chana, murmura, sev, matar, fry bits)
+      lucky_bite: `
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="donaLeaf" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#84a955"/>
+              <stop offset="50%" stop-color="#5c7c32"/>
+              <stop offset="100%" stop-color="#3b5318"/>
+            </linearGradient>
+            <linearGradient id="donaInside" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#a3b86c"/>
+              <stop offset="100%" stop-color="#4d6624"/>
+            </linearGradient>
+            <radialGradient id="biteSnack" cx="40%" cy="35%" r="60%">
+              <stop offset="0%" stop-color="#fde047"/>
+              <stop offset="55%" stop-color="#eab308"/>
+              <stop offset="100%" stop-color="#92400e"/>
+            </radialGradient>
+          </defs>
+          <!-- Drop Shadow -->
+          <ellipse cx="120" cy="208" rx="74" ry="14" fill="rgba(0,0,0,0.32)"/>
+          <!-- Traditional Stitched Leaf Dona Bowl -->
+          <path d="M 32 106 C 38 182, 75 204, 120 204 C 165 204, 202 182, 208 106 Z" fill="url(#donaLeaf)" stroke="#2ec4b6" stroke-width="0"/>
+          <path d="M 32 106 C 38 182, 75 204, 120 204 C 165 204, 202 182, 208 106 Z" fill="url(#donaLeaf)" stroke="#273810" stroke-width="2.5"/>
+          <!-- Leaf Folds & Bamboo Toothpick Stitch -->
+          <path d="M 55 112 Q 85 175 120 202" fill="none" stroke="#273810" stroke-width="1.6" opacity="0.6"/>
+          <path d="M 185 112 Q 155 175 120 202" fill="none" stroke="#273810" stroke-width="1.6" opacity="0.6"/>
+          <line x1="42" y1="118" x2="68" y2="110" stroke="#fde68a" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="172" y1="110" x2="198" y2="118" stroke="#fde68a" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Dona Upper Rim -->
+          <ellipse cx="120" cy="106" rx="88" ry="32" fill="url(#donaInside)" stroke="#273810" stroke-width="2.5"/>
+          <!-- Mixed Assorted Snacks Mound (Chana, Murmura, Fries, Peas, Sev) -->
+          <ellipse cx="120" cy="104" rx="78" ry="26" fill="#78350f"/>
+          <!-- Crispy Fry Strips & Papdi Bits -->
+          <rect x="72" y="76" width="12" height="38" rx="3" transform="rotate(-18 72 76)" fill="#facc15" stroke="#a16207" stroke-width="1.2"/>
+          <rect x="148" y="74" width="12" height="38" rx="3" transform="rotate(22 148 74)" fill="#facc15" stroke="#a16207" stroke-width="1.2"/>
+          <circle cx="120" cy="84" r="18" fill="#fef08a" stroke="#ca8a04" stroke-width="1.2"/>
+          <!-- Chickpeas, Green Matar & Pomegranate Mix -->
+          <g fill="url(#biteSnack)">
+            <circle cx="84" cy="102" r="10"/><circle cx="102" cy="96" r="11"/><circle cx="138" cy="96" r="11"/>
+            <circle cx="156" cy="104" r="10"/><circle cx="94" cy="112" r="10"/><circle cx="120" cy="110" r="12"/>
+            <circle cx="144" cy="112" r="10"/><circle cx="112" cy="88" r="9"/><circle cx="128" cy="88" r="9"/>
+          </g>
+          <g fill="#65a30d" stroke="#365314" stroke-width="0.8">
+            <circle cx="90" cy="94" r="5.5"/><circle cx="130" cy="102" r="5.5"/><circle cx="108" cy="106" r="5.5"/><circle cx="148" cy="96" r="5"/>
+          </g>
+          <g fill="#e11d48">
+            <circle cx="102" cy="88" r="4"/><circle cx="124" cy="96" r="4"/><circle cx="138" cy="108" r="4"/><circle cx="82" cy="108" r="4"/>
+          </g>
+          <!-- Crispy Sev & Coriander Garnish -->
+          <g stroke="#fef08a" stroke-width="2.2" stroke-linecap="round" fill="none">
+            <path d="M 74 98 Q 98 84 122 98"/><path d="M 112 90 Q 138 80 162 98"/><path d="M 86 112 Q 120 98 154 112"/>
+          </g>
+        </svg>
+      `,
+
+      // 1. CHANA CHAAT
+      chana_chaat: `
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="ccBowl" cx="50%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#d97742"/>
+              <stop offset="55%" stop-color="#a84a20"/>
+              <stop offset="100%" stop-color="#5c2309"/>
+            </radialGradient>
+            <linearGradient id="ccRim" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#8c3b16"/>
+              <stop offset="50%" stop-color="#e38c5b"/>
+              <stop offset="100%" stop-color="#6e2a0c"/>
+            </linearGradient>
+            <radialGradient id="chickpea" cx="35%" cy="30%" r="65%">
+              <stop offset="0%" stop-color="#fde68a"/>
+              <stop offset="45%" stop-color="#eab308"/>
+              <stop offset="85%" stop-color="#a16207"/>
+              <stop offset="100%" stop-color="#713f12"/>
+            </radialGradient>
+            <radialGradient id="pomRuby" cx="35%" cy="30%" r="60%">
+              <stop offset="0%" stop-color="#fda4af"/>
+              <stop offset="40%" stop-color="#e11d48"/>
+              <stop offset="100%" stop-color="#881337"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="120" cy="212" rx="82" ry="14" fill="rgba(0,0,0,0.35)"/>
+          <path d="M 24 108 C 28 188, 72 210, 120 210 C 168 210, 212 188, 216 108 Z" fill="url(#ccBowl)" stroke="#431407" stroke-width="2.5"/>
+          <path d="M 38 145 Q 120 168 202 145" fill="none" stroke="#431407" stroke-width="1.5" stroke-opacity="0.45"/>
+          <path d="M 52 175 Q 120 192 188 175" fill="none" stroke="#431407" stroke-width="1.5" stroke-opacity="0.45"/>
+          <ellipse cx="120" cy="106" rx="96" ry="38" fill="#431407" stroke="url(#ccRim)" stroke-width="6"/>
+          <ellipse cx="120" cy="104" rx="88" ry="33" fill="#92400e"/>
+          <g>
+            <circle cx="65" cy="102" r="12" fill="url(#chickpea)"/><circle cx="84" cy="92" r="13" fill="url(#chickpea)"/>
+            <circle cx="106" cy="86" r="12.5" fill="url(#chickpea)"/><circle cx="128" cy="85" r="13" fill="url(#chickpea)"/>
+            <circle cx="152" cy="90" r="12" fill="url(#chickpea)"/><circle cx="172" cy="100" r="12.5" fill="url(#chickpea)"/>
+            <circle cx="52" cy="110" r="11" fill="url(#chickpea)"/><circle cx="76" cy="112" r="13" fill="url(#chickpea)"/>
+            <circle cx="98" cy="105" r="14" fill="url(#chickpea)"/><circle cx="122" cy="104" r="14" fill="url(#chickpea)"/>
+            <circle cx="144" cy="108" r="13" fill="url(#chickpea)"/><circle cx="164" cy="114" r="12" fill="url(#chickpea)"/>
+            <circle cx="184" cy="110" r="10.5" fill="url(#chickpea)"/><circle cx="88" cy="122" r="12" fill="url(#chickpea)"/>
+            <circle cx="112" cy="121" r="13" fill="url(#chickpea)"/><circle cx="135" cy="122" r="12.5" fill="url(#chickpea)"/>
+            <circle cx="155" cy="123" r="11.5" fill="url(#chickpea)"/><circle cx="118" cy="92" r="13" fill="url(#chickpea)"/>
+          </g>
+          <g>
+            <polygon points="72,98 84,95 81,106 70,104" fill="#dc2626" stroke="#7f1d1d" stroke-width="0.8"/>
+            <polygon points="145,96 158,99 154,109 142,105" fill="#ef4444" stroke="#7f1d1d" stroke-width="0.8"/>
+            <polygon points="102,115 114,113 112,124 100,121" fill="#dc2626" stroke="#7f1d1d" stroke-width="0.8"/>
+            <polygon points="88,100 98,97 96,106 86,105" fill="#e9d5ff" stroke="#6b21a8" stroke-width="1"/>
+            <polygon points="128,110 139,108 137,117 126,115" fill="#f3e8ff" stroke="#6b21a8" stroke-width="1"/>
+            <polygon points="160,104 170,102 168,111 158,109" fill="#e9d5ff" stroke="#6b21a8" stroke-width="1"/>
+          </g>
+          <circle cx="95" cy="91" r="4.5" fill="url(#pomRuby)"/><circle cx="132" cy="94" r="4.8" fill="url(#pomRuby)"/>
+          <circle cx="114" cy="108" r="4.5" fill="url(#pomRuby)"/><circle cx="78" cy="116" r="4.2" fill="url(#pomRuby)"/>
+          <circle cx="148" cy="115" r="4.5" fill="url(#pomRuby)"/><circle cx="105" cy="98" r="4" fill="url(#pomRuby)"/>
+          <ellipse cx="82" cy="108" rx="6" ry="3.5" transform="rotate(-25 82 108)" fill="#15803d" stroke="#dcfce7" stroke-width="1"/>
+          <ellipse cx="152" cy="102" rx="6" ry="3.5" transform="rotate(20 152 102)" fill="#15803d" stroke="#dcfce7" stroke-width="1"/>
+          <g stroke="#fef08a" stroke-width="2.2" stroke-linecap="round" fill="none">
+            <path d="M 75 96 Q 92 88 108 98"/><path d="M 110 88 Q 130 96 146 89"/>
+            <path d="M 88 112 Q 115 102 138 114"/><path d="M 96 102 Q 120 85 144 104"/>
+            <path d="M 66 108 Q 84 118 102 110"/><path d="M 132 102 Q 152 114 168 105"/>
+          </g>
+          <g fill="#16a34a" stroke="#052e16" stroke-width="1">
+            <path d="M 120 96 C 110 82, 98 86, 106 98 C 96 102, 108 112, 120 98 Z"/>
+            <path d="M 120 96 C 130 82, 142 86, 134 98 C 144 102, 132 112, 120 98 Z"/>
+            <path d="M 120 96 C 114 78, 126 78, 120 96 Z" fill="#22c55e"/>
+          </g>
+        </svg>
+      `,
+
+      // 2. MATAR KULCHA
+      matar_kulcha: `
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="mkPlate" cx="50%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="#f1f5f9"/>
+              <stop offset="70%" stop-color="#cbd5e1"/>
+              <stop offset="100%" stop-color="#64748b"/>
+            </radialGradient>
+            <radialGradient id="kulchaBread" cx="45%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#fffbeb"/>
+              <stop offset="55%" stop-color="#fde68a"/>
+              <stop offset="88%" stop-color="#d97706"/>
+              <stop offset="100%" stop-color="#92400e"/>
+            </radialGradient>
+            <radialGradient id="matarBowl" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#eab308"/>
+              <stop offset="65%" stop-color="#ca8a04"/>
+              <stop offset="100%" stop-color="#713f12"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="120" cy="198" rx="98" ry="22" fill="rgba(0,0,0,0.3)"/>
+          <ellipse cx="120" cy="135" rx="102" ry="62" fill="url(#mkPlate)" stroke="#334155" stroke-width="3"/>
+          <ellipse cx="120" cy="135" rx="92" ry="54" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+          <ellipse cx="144" cy="150" rx="56" ry="34" transform="rotate(-12 144 150)" fill="url(#kulchaBread)" stroke="#78350f" stroke-width="2"/>
+          <ellipse cx="152" cy="122" rx="54" ry="32" transform="rotate(8 152 122)" fill="url(#kulchaBread)" stroke="#78350f" stroke-width="2"/>
+          <ellipse cx="138" cy="116" rx="10" ry="6" fill="#b45309" opacity="0.65"/>
+          <ellipse cx="168" cy="128" rx="12" ry="7" fill="#92400e" opacity="0.6"/>
+          <ellipse cx="148" cy="156" rx="11" ry="6" fill="#b45309" opacity="0.65"/>
+          <polygon points="146,115 162,112 165,124 149,127" fill="#fef08a" stroke="#ca8a04" stroke-width="1.2"/>
+          <g fill="#15803d">
+            <circle cx="132" cy="124" r="2.5"/><circle cx="158" cy="108" r="2.2"/><circle cx="175" cy="119" r="2.5"/>
+            <circle cx="128" cy="148" r="2.5"/><circle cx="164" cy="152" r="2.5"/><circle cx="140" cy="134" r="2"/>
+          </g>
+          <path d="M 34 112 C 36 162, 114 162, 116 112 Z" fill="#78350f" stroke="#451a03" stroke-width="2"/>
+          <ellipse cx="75" cy="112" rx="41" ry="22" fill="url(#matarBowl)" stroke="#451a03" stroke-width="2.5"/>
+          <g fill="#65a30d" stroke="#365314" stroke-width="0.8">
+            <circle cx="58" cy="108" r="5.5"/><circle cx="72" cy="102" r="6"/><circle cx="88" cy="106" r="5.5"/>
+            <circle cx="64" cy="118" r="6"/><circle cx="80" cy="116" r="6"/><circle cx="94" cy="115" r="5"/>
+            <circle cx="50" cy="114" r="5"/><circle cx="75" cy="109" r="5.5"/>
+          </g>
+          <rect x="68" y="106" width="8" height="6" rx="1" fill="#dc2626"/>
+          <rect x="82" y="112" width="7" height="5" rx="1" fill="#dc2626"/>
+          <path d="M 86 162 A 16 16 0 0 1 114 172 Z" fill="#fde047" stroke="#ca8a04" stroke-width="2"/>
+          <path d="M 62 165 Q 85 178 108 175" fill="none" stroke="#15803d" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+      `,
+
+      // 3. BHEL PURI
+      bhel_puri: `
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bpCone" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f5deb3"/>
+              <stop offset="55%" stop-color="#d2b48c"/>
+              <stop offset="100%" stop-color="#8b5a2b"/>
+            </linearGradient>
+            <radialGradient id="bpPuff" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#fef9c3"/>
+              <stop offset="65%" stop-color="#fde047"/>
+              <stop offset="100%" stop-color="#ca8a04"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="120" cy="222" rx="34" ry="8" fill="rgba(0,0,0,0.28)"/>
+          <polygon points="56,78 184,78 120,220" fill="url(#bpCone)" stroke="#5c3a21" stroke-width="2.5" stroke-linejoin="round"/>
+          <line x1="120" y1="220" x2="146" y2="78" stroke="#78350f" stroke-width="1.5" stroke-opacity="0.45"/>
+          <ellipse cx="120" cy="78" rx="64" ry="22" fill="#78350f" stroke="#5c3a21" stroke-width="2"/>
+          <circle cx="96" cy="64" r="18" fill="#ca8a04"/>
+          <circle cx="144" cy="64" r="18" fill="#ca8a04"/>
+          <circle cx="120" cy="54" r="22" fill="#eab308"/>
+          <g fill="url(#bpPuff)" stroke="#a16207" stroke-width="0.8">
+            <ellipse cx="78" cy="74" rx="8" ry="5" transform="rotate(-15 78 74)"/>
+            <ellipse cx="95" cy="68" rx="9" ry="5.5" transform="rotate(12 95 68)"/>
+            <ellipse cx="114" cy="62" rx="9" ry="5.5" transform="rotate(-8 114 62)"/>
+            <ellipse cx="134" cy="64" rx="9" ry="5.5" transform="rotate(18 134 64)"/>
+            <ellipse cx="154" cy="72" rx="8.5" ry="5" transform="rotate(-20 154 72)"/>
+            <ellipse cx="88" cy="82" rx="8.5" ry="5" transform="rotate(8 88 82)"/>
+            <ellipse cx="110" cy="78" rx="9" ry="5.5" transform="rotate(-12 110 78)"/>
+            <ellipse cx="130" cy="80" rx="9" ry="5.5" transform="rotate(10 130 80)"/>
+            <ellipse cx="148" cy="82" rx="8" ry="5" transform="rotate(-6 148 82)"/>
+            <ellipse cx="105" cy="52" rx="8.5" ry="5" transform="rotate(15 105 52)"/>
+            <ellipse cx="126" cy="50" rx="8.5" ry="5" transform="rotate(-14 126 50)"/>
+          </g>
+          <circle cx="84" cy="60" r="12" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/>
+          <circle cx="152" cy="58" r="12" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/>
+          <rect x="96" y="70" width="8" height="7" rx="1.5" fill="#dc2626"/>
+          <rect x="132" y="68" width="8" height="7" rx="1.5" fill="#dc2626"/>
+          <rect x="114" y="54" width="7" height="6" rx="1.5" fill="#e9d5ff" stroke="#6b21a8" stroke-width="0.8"/>
+          <rect x="102" y="80" width="7" height="6" rx="1.5" fill="#e9d5ff" stroke="#6b21a8" stroke-width="0.8"/>
+          <circle cx="122" cy="70" r="4" fill="#e11d48"/><circle cx="90" cy="74" r="3.8" fill="#e11d48"/>
+          <circle cx="142" cy="76" r="4" fill="#e11d48"/>
+          <g stroke="#fef08a" stroke-width="2" stroke-linecap="round" fill="none">
+            <path d="M 76 68 Q 98 56 118 68"/><path d="M 116 58 Q 138 48 156 66"/>
+            <path d="M 86 78 Q 118 66 148 78"/>
+          </g>
+          <circle cx="120" cy="60" r="5" fill="#16a34a"/>
+          <circle cx="108" cy="66" r="4" fill="#22c55e"/>
+          <circle cx="132" cy="64" r="4" fill="#16a34a"/>
+        </svg>
+      `,
+
+      // 4. STEAMED MOMOS (HALF PLATE)
+      momo: `
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="bambooRim" cx="50%" cy="50%" r="50%">
+              <stop offset="65%" stop-color="#92400e"/>
+              <stop offset="88%" stop-color="#d97706"/>
+              <stop offset="100%" stop-color="#78350f"/>
+            </radialGradient>
+            <radialGradient id="momoSkin" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="65%" stop-color="#f8fafc"/>
+              <stop offset="92%" stop-color="#cbd5e1"/>
+              <stop offset="100%" stop-color="#94a3b8"/>
+            </radialGradient>
+            <radialGradient id="chutneyRed" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#f87171"/>
+              <stop offset="50%" stop-color="#dc2626"/>
+              <stop offset="100%" stop-color="#7f1d1d"/>
+            </radialGradient>
+          </defs>
+          <circle cx="124" cy="126" r="96" fill="rgba(0,0,0,0.32)"/>
+          <circle cx="120" cy="120" r="95" fill="url(#bambooRim)" stroke="#451a03" stroke-width="3"/>
+          <circle cx="120" cy="120" r="82" fill="#451a03" stroke="#b45309" stroke-width="3"/>
+          <g stroke="#78350f" stroke-width="2" opacity="0.6">
+            <line x1="45" y1="90" x2="195" y2="90"/><line x1="38" y1="120" x2="202" y2="120"/>
+            <line x1="45" y1="150" x2="195" y2="150"/><line x1="90" y1="45" x2="90" y2="195"/>
+            <line x1="120" y1="38" x2="120" y2="202"/><line x1="150" y1="45" x2="150" y2="195"/>
+          </g>
+          <g>
+            <g transform="translate(120, 62)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkin)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(174, 120)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkin)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(120, 178)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkin)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(66, 120)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkin)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+          </g>
+          <circle cx="120" cy="120" r="27" fill="#ffffff" stroke="#334155" stroke-width="2.5"/>
+          <circle cx="120" cy="120" r="22" fill="url(#chutneyRed)"/>
+          <circle cx="114" cy="115" r="1.8" fill="#fef08a"/><circle cx="126" cy="118" r="1.8" fill="#fef08a"/>
+          <circle cx="118" cy="126" r="1.8" fill="#fef08a"/><circle cx="120" cy="120" r="3" fill="#16a34a"/>
+        </svg>
+      `,
+
+      // 4B. STEAMED MOMOS (FULL PLATE)
+      momo_full: `
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="bambooRimF" cx="50%" cy="50%" r="50%">
+              <stop offset="65%" stop-color="#92400e"/>
+              <stop offset="88%" stop-color="#d97706"/>
+              <stop offset="100%" stop-color="#78350f"/>
+            </radialGradient>
+            <radialGradient id="momoSkinF" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="65%" stop-color="#f8fafc"/>
+              <stop offset="92%" stop-color="#cbd5e1"/>
+              <stop offset="100%" stop-color="#94a3b8"/>
+            </radialGradient>
+            <radialGradient id="chutneyRedF" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#f87171"/>
+              <stop offset="50%" stop-color="#dc2626"/>
+              <stop offset="100%" stop-color="#7f1d1d"/>
+            </radialGradient>
+          </defs>
+          <circle cx="124" cy="126" r="96" fill="rgba(0,0,0,0.32)"/>
+          <circle cx="120" cy="120" r="95" fill="url(#bambooRimF)" stroke="#451a03" stroke-width="3"/>
+          <circle cx="120" cy="120" r="82" fill="#451a03" stroke="#b45309" stroke-width="3"/>
+          <g stroke="#78350f" stroke-width="2" opacity="0.6">
+            <line x1="45" y1="90" x2="195" y2="90"/><line x1="38" y1="120" x2="202" y2="120"/>
+            <line x1="45" y1="150" x2="195" y2="150"/><line x1="90" y1="45" x2="90" y2="195"/>
+            <line x1="120" y1="38" x2="120" y2="202"/><line x1="150" y1="45" x2="150" y2="195"/>
+          </g>
+          <g>
+            <g transform="translate(120, 62)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(170, 92)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(170, 148)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(120, 178)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(70, 148)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+            <g transform="translate(70, 92)">
+              <circle cx="0" cy="0" r="24" fill="url(#momoSkinF)" stroke="#64748b" stroke-width="1.5"/>
+              <path d="M0,-4 C8,-16 16,-8 4,0 C16,8 8,16 0,4 C-8,16 -16,8 -4,0 C-16,-8 -8,-16 0,-4 Z" fill="none" stroke="#94a3b8" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+            </g>
+          </g>
+          <circle cx="120" cy="120" r="27" fill="#ffffff" stroke="#334155" stroke-width="2.5"/>
+          <circle cx="120" cy="120" r="22" fill="url(#chutneyRedF)"/>
+          <circle cx="114" cy="115" r="1.8" fill="#fef08a"/><circle cx="126" cy="118" r="1.8" fill="#fef08a"/>
+          <circle cx="118" cy="126" r="1.8" fill="#fef08a"/><circle cx="120" cy="120" r="3" fill="#16a34a"/>
+        </svg>
+      `,
+
+      // 5. RASGULLA
+      rasgulla: `
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="rgBowl" cx="50%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="#fef3c7"/>
+              <stop offset="70%" stop-color="#f59e0b"/>
+              <stop offset="100%" stop-color="#92400e"/>
+            </radialGradient>
+            <radialGradient id="rgBall" cx="38%" cy="32%" r="65%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="58%" stop-color="#fffbeb"/>
+              <stop offset="88%" stop-color="#fde68a"/>
+              <stop offset="100%" stop-color="#d97706"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="120" cy="204" rx="80" ry="14" fill="rgba(0,0,0,0.28)"/>
+          <path d="M 32 115 C 36 188, 75 204, 120 204 C 165 204, 204 188, 208 115 Z" fill="url(#rgBowl)" stroke="#78350f" stroke-width="2.5"/>
+          <ellipse cx="120" cy="115" rx="88" ry="38" fill="#fef08a" stroke="#78350f" stroke-width="3.5"/>
+          <ellipse cx="120" cy="116" rx="80" ry="32" fill="#facc15" opacity="0.65"/>
+          <circle cx="84" cy="100" r="24" fill="url(#rgBall)" stroke="#ca8a04" stroke-width="1.2"/>
+          <circle cx="136" cy="96" r="25" fill="url(#rgBall)" stroke="#ca8a04" stroke-width="1.2"/>
+          <circle cx="162" cy="118" r="23" fill="url(#rgBall)" stroke="#ca8a04" stroke-width="1.2"/>
+          <circle cx="72" cy="124" r="23" fill="url(#rgBall)" stroke="#ca8a04" stroke-width="1.2"/>
+          <circle cx="115" cy="122" r="26" fill="url(#rgBall)" stroke="#ca8a04" stroke-width="1.4"/>
+          <g stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" fill="none">
+            <path d="M 80 92 Q 86 88 90 95"/><path d="M 132 88 Q 140 84 142 92"/>
+            <path d="M 110 112 Q 118 108 122 116"/><path d="M 68 118 Q 74 114 78 120"/>
+            <path d="M 158 112 Q 165 108 168 115"/>
+          </g>
+          <g fill="#4d7c0f">
+            <ellipse cx="86" cy="96" rx="3.5" ry="1.8" transform="rotate(-20 86 96)"/>
+            <ellipse cx="138" cy="94" rx="3.5" ry="1.8" transform="rotate(15 138 94)"/>
+            <ellipse cx="116" cy="118" rx="4" ry="2" transform="rotate(-10 116 118)"/>
+            <ellipse cx="160" cy="116" rx="3.5" ry="1.8"/>
+          </g>
+        </svg>
+      `,
+
+      // 6. JALJIRA
+      jaljira: `
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="jjLiquid" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#4d7c0f"/>
+              <stop offset="50%" stop-color="#3f6212"/>
+              <stop offset="100%" stop-color="#1a2e05"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="120" cy="218" rx="52" ry="10" fill="rgba(0,0,0,0.3)"/>
+          <circle cx="168" cy="54" r="24" fill="#fde047" stroke="#ca8a04" stroke-width="3"/>
+          <circle cx="168" cy="54" r="19" fill="#fef08a" stroke="#eab308" stroke-width="1"/>
+          <line x1="168" y1="35" x2="168" y2="73" stroke="#ca8a04" stroke-width="1.2"/>
+          <line x1="149" y1="54" x2="187" y2="54" stroke="#ca8a04" stroke-width="1.2"/>
+          <polygon points="62,52 178,52 158,212 82,212" fill="rgba(255,255,255,0.35)" stroke="#334155" stroke-width="3" stroke-linejoin="round"/>
+          <polygon points="65,68 175,68 156,206 84,206" fill="url(#jjLiquid)"/>
+          <ellipse cx="120" cy="68" rx="55" ry="11" fill="#65a30d" stroke="#365314" stroke-width="1.5"/>
+          <g fill="#facc15" stroke="#a16207" stroke-width="0.8">
+            <circle cx="82" cy="70" r="4.5"/><circle cx="95" cy="66" r="4.8"/><circle cx="110" cy="72" r="4.5"/>
+            <circle cx="125" cy="67" r="5"/><circle cx="140" cy="71" r="4.5"/><circle cx="154" cy="68" r="4.2"/>
+            <circle cx="90" cy="82" r="4"/><circle cx="116" cy="85" r="4.2"/><circle cx="144" cy="83" r="4"/>
+          </g>
+          <rect x="86" y="96" width="26" height="24" rx="4" transform="rotate(-12 86 96)" fill="rgba(255,255,255,0.28)" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+          <rect x="122" y="108" width="26" height="24" rx="4" transform="rotate(14 122 108)" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.55)" stroke-width="1.5"/>
+          <polygon points="72,62 82,62 92,198 85,198" fill="rgba(255,255,255,0.32)"/>
+          <path d="M 118 64 C 102 36, 82 44, 102 66 Z" fill="#22c55e" stroke="#052e16" stroke-width="1.5"/>
+          <path d="M 118 64 C 134 36, 152 46, 130 66 Z" fill="#16a34a" stroke="#052e16" stroke-width="1.5"/>
+        </svg>
+      `,
+
+      // 7. FRENCH FRIES
+      french_fries: `
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ffStick" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#fef08a"/>
+              <stop offset="55%" stop-color="#facc15"/>
+              <stop offset="100%" stop-color="#ca8a04"/>
+            </linearGradient>
+            <linearGradient id="ffBox" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ef4444"/>
+              <stop offset="55%" stop-color="#dc2626"/>
+              <stop offset="100%" stop-color="#991b1b"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="120" cy="218" rx="58" ry="11" fill="rgba(0,0,0,0.32)"/>
+          <g fill="url(#ffStick)" stroke="#a16207" stroke-width="1.8" stroke-linejoin="round">
+            <rect x="64" y="42" width="16" height="95" rx="3" transform="rotate(-14 64 42)"/>
+            <rect x="82" y="28" width="17" height="105" rx="3" transform="rotate(-6 82 28)"/>
+            <rect x="104" y="22" width="17" height="110" rx="3" transform="rotate(-1 104 22)"/>
+            <rect x="124" y="24" width="17" height="110" rx="3" transform="rotate(4 124 24)"/>
+            <rect x="144" y="32" width="17" height="102" rx="3" transform="rotate(10 144 32)"/>
+            <rect x="160" y="46" width="16" height="92" rx="3" transform="rotate(16 160 46)"/>
+          </g>
+          <g fill="url(#ffStick)" stroke="#854d0e" stroke-width="1.8" stroke-linejoin="round">
+            <rect x="72" y="54" width="17" height="88" rx="3" transform="rotate(-8 72 54)"/>
+            <rect x="93" y="40" width="18" height="96" rx="3" transform="rotate(-2 93 40)"/>
+            <rect x="114" y="36" width="18" height="98" rx="3" transform="rotate(2 114 36)"/>
+            <rect x="135" y="44" width="18" height="92" rx="3" transform="rotate(7 135 44)"/>
+            <rect x="152" y="58" width="16" height="84" rx="3" transform="rotate(12 152 58)"/>
+          </g>
+          <path d="M 56 102 Q 120 128 184 102 L 164 214 Q 120 220 76 214 Z" fill="url(#ffBox)" stroke="#7f1d1d" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M 62 112 Q 120 136 178 112" fill="none" stroke="#facc15" stroke-width="4"/>
+          <circle cx="120" cy="166" r="22" fill="#facc15" stroke="#7f1d1d" stroke-width="2"/>
+          <text x="120" y="173" text-anchor="middle" font-family="Impact, sans-serif" font-size="18" fill="#991b1b">YH</text>
+        </svg>
+      `
+    };
+
+    // 50 Unique Historical & Inspiring Facts about Pandit Jawaharlal Nehru (Assigned 1-to-1 to the 50 Crimson Red ID Tokens)
+    const NEHRU_50_FACTS = [
+      "Fact #1: Born on 14 Nov 1889 in Prayagraj (Allahabad) to Motilal & Swarup Rani Nehru.",
+      "Fact #2: Lovingly called 'Chacha Nehru' for his deep affection and belief in children.",
+      "Fact #3: Served as the first Prime Minister of independent India from 1947 to 1964.",
+      "Fact #4: Studied Natural Sciences at Trinity College, Cambridge, graduating in 1910.",
+      "Fact #5: Qualified as a Barrister-at-Law from the Inner Temple in London in 1912.",
+      "Fact #6: Always wore a fresh red rose on his jacket in memory of his wife Kamala Nehru.",
+      "Fact #7: Wrote the classic book 'The Discovery of India' while imprisoned at Ahmednagar Fort.",
+      "Fact #8: Authored 'Glimpses of World History' as 196 letters to his daughter Indira.",
+      "Fact #9: Delivered the historic 'Tryst with Destiny' speech at midnight on 14–15 Aug 1947.",
+      "Fact #10: Nominated 11 times for the prestigious Nobel Peace Prize between 1950 and 1955.",
+      "Fact #11: Awarded India's highest civilian honor, the Bharat Ratna, in July 1955.",
+      "Fact #12: Declared 'Purna Swaraj' (Complete Independence) at the 1929 Lahore Congress.",
+      "Fact #13: Hoisted the Indian Tricolour on the banks of the Ravi River on 31 Dec 1929.",
+      "Fact #14: Pioneered the establishment of the Indian Institutes of Technology (IITs).",
+      "Fact #15: Founded AIIMS and IIMs to build world-class medical and management education.",
+      "Fact #16: Championed the creation of INCOSPAR in 1962, the forerunner of ISRO.",
+      "Fact #17: Co-founded the Non-Aligned Movement (NAM) in 1961 to promote world peace.",
+      "Fact #18: Called modern dams, factories, and research labs the 'Temples of Modern India'.",
+      "Fact #19: Established the Sahitya Akademi, Lalit Kala Akademi, and Sangeet Natak Akademi.",
+      "Fact #20: Spent over 9 years (3,259 days) in prison during India's freedom struggle.",
+      "Fact #21: Wrote 'Letters from a Father to His Daughter' in 1928 about nature and history.",
+      "Fact #22: Launched India's First Five-Year Plan in 1951 to modernize agriculture.",
+      "Fact #23: Set up the Atomic Energy Commission of India in 1948 with Dr. Homi Bhabha.",
+      "Fact #24: Popularized the iconic high-necked 'Nehru Jacket' across international diplomacy.",
+      "Fact #25: Believed children are like buds in a garden and must be nurtured with care.",
+      "Fact #26: Founded the National Herald newspaper in Lucknow in September 1938.",
+      "Fact #27: Moved the historic 'Objectives Resolution' that shaped the Constitution's Preamble.",
+      "Fact #28: Initiated the Bhakra Nangal Dam project to power rural and industrial growth.",
+      "Fact #29: Signed the Panchsheel Agreement advocating peaceful international coexistence.",
+      "Fact #30: Hosted the very first Asian Games in New Delhi in March 1951.",
+      "Fact #31: Established the Children's Film Society of India in 1955 for young minds.",
+      "Fact #32: Inspired Shankar's International Children's Competition for young artists.",
+      "Fact #33: Homeschooled in his early years by Irish tutor Ferdinand T. Brooks.",
+      "Fact #34: Attended Harrow School in England before entering Cambridge University.",
+      "Fact #35: First met Mahatma Gandhi at the 1916 Lucknow Session of the Congress.",
+      "Fact #36: Became President of the Allahabad Municipal Board in 1924.",
+      "Fact #37: Elected President of the Indian National Congress multiple times starting in 1929.",
+      "Fact #38: Penned his best-selling 'Toward Freedom' autobiography in jail in 1936.",
+      "Fact #39: Advocated scientific temper, humanism, and the spirit of inquiry.",
+      "Fact #40: Inaugurated Asia's first nuclear reactor, Apsara, at Trombay in 1956.",
+      "Fact #41: Spearheaded the States Reorganisation Act of 1956 along linguistic lines.",
+      "Fact #42: Promoted free primary education and nutrition programs including milk for schoolkids.",
+      "Fact #43: Established the National Book Trust (NBT) in 1957 to make books affordable.",
+      "Fact #44: Created the Council of Scientific and Industrial Research (CSIR) network of labs.",
+      "Fact #45: Championed universal adult franchise so every citizen could vote from day one.",
+      "Fact #46: Loved animals deeply and kept golden retrievers and even red pandas at Teen Murti.",
+      "Fact #47: His former residence, Teen Murti Bhavan, hosts the Nehru Planetarium in Delhi.",
+      "Fact #48: First celebrated Children's Day on 14 November across India in 1964.",
+      "Fact #49: Kept Robert Frost's lines 'Miles to go before I sleep' on his study desk.",
+      "Fact #50: Remembered forever as the 'Architect of Modern India' and friend of youth."
+    ];
+
+    let customNehruImg = NEHRU_IMAGE_PATH;
+    try {
+      const savedPhoto = localStorage.getItem('yh_nehru_photo_v3');
+      if (savedPhoto) customNehruImg = savedPhoto;
+    } catch (e) {}
+
+    // Default 9-Item Menu Configuration (Total = 400 tokens including 50 of ₹5 "Lucky Bite")
+    const DEFAULT_MENU = [
+      { id: 'lb05', name: 'Lucky Bite',        price: 5,  words: 'FIVE RUPEES ONLY',   prefix: 'YH-LB05', defaultQty: 50, svgKey: 'lucky_bite',   customImg: null },
+      { id: 'cc10', name: 'Chana Chaat',       price: 10, words: 'TEN RUPEES ONLY',    prefix: 'YH-CC10', defaultQty: 50, svgKey: 'chana_chaat',  customImg: null },
+      { id: 'mk30', name: 'Matar Kulcha',      price: 30, words: 'THIRTY RUPEES ONLY', prefix: 'YH-MK30', defaultQty: 50, svgKey: 'matar_kulcha', customImg: null },
+      { id: 'bp10', name: 'Bhel Puri',         price: 10, words: 'TEN RUPEES ONLY',    prefix: 'YH-BP10', defaultQty: 40, svgKey: 'bhel_puri',    customImg: null },
+      { id: 'mh30', name: 'Momo (Half Plate)', price: 30, words: 'THIRTY RUPEES ONLY', prefix: 'YH-MH30', defaultQty: 40, svgKey: 'momo',         customImg: null },
+      { id: 'mf60', name: 'Momo (Full Plate)', price: 60, words: 'SIXTY RUPEES ONLY',  prefix: 'YH-MF60', defaultQty: 40, svgKey: 'momo_full',    customImg: null },
+      { id: 'rg10', name: 'Rasgulla',          price: 10, words: 'TEN RUPEES ONLY',    prefix: 'YH-RG10', defaultQty: 40, svgKey: 'rasgulla',     customImg: null },
+      { id: 'jj10', name: 'Jaljira',           price: 10, words: 'TEN RUPEES ONLY',    prefix: 'YH-JJ10', defaultQty: 50, svgKey: 'jaljira',      customImg: null },
+      { id: 'ff20', name: 'French Fries',      price: 20, words: 'TWENTY RUPEES ONLY', prefix: 'YH-FF20', defaultQty: 40, svgKey: 'french_fries', customImg: null }
+    ];
+
+    let menuState = DEFAULT_MENU.map(item => ({ ...item, qty: item.defaultQty }));
+    let shuffledTokens = [];
+
+    // Pre-rasterized bitmap cache for the 9 food illustrations + Nehru portrait
+    const bitmapWatermarkCache = {};
+
+    async function ensureWatermarksCached() {
+      const foodTasks = menuState.map(item => {
+        return new Promise((resolve) => {
+          const src = item.customImg
+            ? item.customImg
+            : 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(FOOD_SVGS[item.svgKey].trim());
+
+          if (bitmapWatermarkCache[item.id] && bitmapWatermarkCache[item.id].srcKey === src) {
+            return resolve();
+          }
+
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            const off = document.createElement('canvas');
+            off.width = 360;
+            off.height = 360;
+            const octx = off.getContext('2d');
+            octx.drawImage(img, 0, 0, 360, 360);
+            bitmapWatermarkCache[item.id] = {
+              srcKey: src,
+              canvas: off,
+              dataUrl: off.toDataURL('image/png')
+            };
+            resolve();
+          };
+          img.onerror = () => resolve();
+          img.src = src;
+        });
+      });
+
+      const nehruTask = new Promise((resolve) => {
+        const srcToLoad = customNehruImg || NEHRU_IMAGE_PATH;
+
+        if (bitmapWatermarkCache['nehru'] && bitmapWatermarkCache['nehru'].srcKey === srcToLoad) {
+          return resolve();
+        }
+
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const off = document.createElement('canvas');
+            off.width = 440;
+            off.height = 400;
+            const octx = off.getContext('2d');
+            octx.clearRect(0, 0, 440, 400);
+
+            const iw = img.naturalWidth || 440;
+            const ih = img.naturalHeight || 400;
+            const scale = Math.min(440 / iw, 400 / ih);
+            const dw = iw * scale;
+            const dh = ih * scale;
+            const dx = (440 - dw) / 2;
+            const dy = (400 - dh) / 2;
+            octx.drawImage(img, dx, dy, dw, dh);
+
+            let safeDataUrl = srcToLoad;
+            try {
+              safeDataUrl = off.toDataURL('image/png');
+            } catch (secErr) {
+              // Keeps raw local file path if running via local file:// protocol
+              safeDataUrl = srcToLoad;
+            }
+
+            bitmapWatermarkCache['nehru'] = {
+              srcKey: srcToLoad,
+              canvas: off,
+              dataUrl: safeDataUrl
+            };
+          } catch (e) {}
+          resolve();
+        };
+        img.onerror = () => resolve();
+        img.src = srcToLoad;
+      });
+
+      await Promise.all([...foodTasks, nehruTask]);
+    }
+
+    // Fisher-Yates unbiased random shuffle
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Build the 9-item Menu Control Grid
+    function renderMenuControls() {
+      const grid = document.getElementById('menu-quota-grid');
+      grid.innerHTML = '';
+
+      menuState.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'bg-zinc-950/90 border border-zinc-800 rounded-xl p-3 flex flex-col justify-between gap-2';
+
+        const previewGraphic = item.customImg
+          ? `<img src="${item.customImg}" alt="${item.name}" class="w-10 h-10 object-contain rounded bg-yellow-100/20 p-0.5"/>`
+          : `<div class="w-10 h-10 flex-shrink-0">${FOOD_SVGS[item.svgKey]}</div>`;
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              ${previewGraphic}
+              <div class="min-w-0">
+                <div class="text-xs font-black text-yellow-400 truncate">${item.name}</div>
+                <div class="text-[11px] font-bold text-zinc-400">Price: <b class="text-white">₹${item.price}</b> &bull; <span class="text-zinc-500">${item.prefix}</span></div>
+              </div>
+            </div>
+            <label class="cursor-pointer px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-[10px] font-bold text-zinc-300 border border-zinc-700 flex-shrink-0" title="Upload custom PNG/JPG for this item">
+              ${item.customImg ? '✓ PNG' : '🖼️ PNG'}
+              <input type="file" accept="image/*" data-idx="${idx}" class="custom-png-input hidden"/>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-800/80">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-bold text-zinc-400 uppercase">Quota:</span>
+              <input
+                type="number"
+                min="0"
+                max="2000"
+                step="5"
+                value="${item.qty}"
+                data-idx="${idx}"
+                class="menu-qty-input w-20 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-sm font-black text-white focus:outline-none focus:border-yellow-400"
+              />
+            </div>
+            <div class="text-[11px] text-zinc-400">
+              Total: <b id="item-subtotal-${idx}" class="text-emerald-400">₹${(item.qty * item.price).toLocaleString('en-IN')}</b>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      grid.querySelectorAll('.menu-qty-input').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+          const idx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
+          const val = Math.max(0, parseInt(e.currentTarget.value, 10) || 0);
+          menuState[idx].qty = val;
+          document.getElementById(`item-subtotal-${idx}`).textContent = '₹' + (val * menuState[idx].price).toLocaleString('en-IN');
+          rebuildAndShuffleTokens();
+        });
+      });
+
+      grid.querySelectorAll('.custom-png-input').forEach(fileInp => {
+        fileInp.addEventListener('change', (e) => {
+          const idx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            menuState[idx].customImg = evt.target.result;
+            renderMenuControls();
+            renderSheets();
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+    }
+
+    // Build the pool of 400 tokens, shuffle randomly, and assign 50 Red IDs (20 with ★ Secret Star)
+    function rebuildAndShuffleTokens() {
+      const pool = [];
+      menuState.forEach(item => {
+        for (let s = 1; s <= item.qty; s++) {
+          pool.push({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            words: item.words,
+            serial: `${item.prefix}-${String(s).padStart(3, '0')}`,
+            svgKey: item.svgKey,
+            customImg: item.customImg,
+            isRed: false,
+            isWinner: false,
+            nehruFact: null
+          });
+        }
+      });
+
+      shuffledTokens = shuffleArray(pool);
+
+      // Randomly pick 50 tokens to have Crimson Red IDs + 50 Unique Nehru Facts, and 20 of those 50 to be Secret ★ Winners
+      const allIndices = Array.from({ length: shuffledTokens.length }, (_, i) => i);
+      const redCount = Math.min(50, shuffledTokens.length);
+      const winnerCount = Math.min(20, redCount);
+
+      const redIndices = shuffleArray(allIndices).slice(0, redCount);
+      const winnerIndices = shuffleArray([...redIndices]).slice(0, winnerCount);
+      const shuffledFacts = shuffleArray([...NEHRU_50_FACTS]);
+
+      redIndices.forEach((idx, rOrder) => {
+        shuffledTokens[idx].isRed = true;
+        shuffledTokens[idx].nehruFact = shuffledFacts[rOrder % shuffledFacts.length];
+      });
+      winnerIndices.forEach(idx => { shuffledTokens[idx].isWinner = true; });
+
+      renderSheets();
+    }
+
+    // Read current Smart Slider offsets
+    function getSliderOffsets() {
+      return {
+        corner: parseFloat(document.getElementById('adj-corner')?.value) || 0,
+        title:  parseFloat(document.getElementById('adj-title')?.value) || 0,
+        price:  parseFloat(document.getElementById('adj-price')?.value) || 0,
+        words:  parseFloat(document.getElementById('adj-words')?.value) || 0,
+        wmSize: parseFloat(document.getElementById('adj-wmsize')?.value) || 0,
+        backId: parseFloat(document.getElementById('adj-backid')?.value) || 0
+      };
+    }
+
+    // Base typography & watermark presets per grid density
+    function getBaseGridSpecs(tokensPerPage) {
+      if (tokensPerPage === 8) {
+        return { item: 18.5, price: 35, words: 11.5, house: 15.5, pill: 13, footer: 13, padV: '3.6mm', wm: 74, backId: 22 };
+      } else if (tokensPerPage === 10) {
+        return { item: 17, price: 31, words: 10.5, house: 14.5, pill: 12, footer: 12, padV: '2.8mm', wm: 64, backId: 19 };
+      } else if (tokensPerPage === 12) {
+        return { item: 15.5, price: 27, words: 9.5, house: 13.5, pill: 11, footer: 11, padV: '2.2mm', wm: 55, backId: 16.5 };
+      } else if (tokensPerPage === 14) {
+        return { item: 14, price: 23.5, words: 9, house: 12.5, pill: 10, footer: 10, padV: '1.6mm', wm: 48, backId: 14.5 };
+      }
+      return { item: 13, price: 21, words: 8.5, house: 11.5, pill: 9.5, footer: 9.5, padV: '1.2mm', wm: 42, backId: 13 };
+    }
+
+    // Apply responsive typography & watermark sizing + Smart Slider offsets
+    function applyGridScalingCSS(tokensPerPage) {
+      const rows = tokensPerPage / 2;
+      document.documentElement.style.setProperty('--rows', rows);
+
+      const base = getBaseGridSpecs(tokensPerPage);
+      const adj = getSliderOffsets();
+
+      document.documentElement.style.setProperty('--item-font-size', `${Math.max(7, base.item + adj.title)}pt`);
+      document.documentElement.style.setProperty('--price-font-size', `${Math.max(12, base.price + adj.price)}pt`);
+      document.documentElement.style.setProperty('--words-font-size', `${Math.max(5, base.words + adj.words)}pt`);
+      document.documentElement.style.setProperty('--corner-house-size', `${Math.max(6, base.house + adj.corner)}pt`);
+      document.documentElement.style.setProperty('--corner-pill-size', `${Math.max(6, base.pill + adj.corner)}pt`);
+      document.documentElement.style.setProperty('--corner-footer-size', `${Math.max(6, base.footer + adj.corner)}pt`);
+      document.documentElement.style.setProperty('--pad-v', base.padV);
+      document.documentElement.style.setProperty('--wm-size', `${Math.max(20, base.wm + adj.wmSize)}mm`);
+      document.documentElement.style.setProperty('--back-id-size', `${Math.max(8, base.backId + adj.backId)}pt`);
+    }
+
+    // Render all Front & Mirrored Back A4 sheets + Master Winner Cheat Sheet
+    async function renderSheets() {
+      await ensureWatermarksCached();
+
+      const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
+      const includeBackside = document.getElementById('toggle-backside').checked;
+      const rows = tokensPerPage / 2;
+      applyGridScalingCSS(tokensPerPage);
+
+      const totalTokens = shuffledTokens.length;
+      const totalFrontSheets = Math.ceil(totalTokens / tokensPerPage);
+      const totalCash = shuffledTokens.reduce((sum, t) => sum + t.price, 0);
+      const spareSlots = (totalFrontSheets * tokensPerPage) - totalTokens;
+
+      const redTokens = shuffledTokens.filter(t => t.isRed);
+      const winningTokens = shuffledTokens.filter(t => t.isWinner).sort((a, b) => a.serial.localeCompare(b.serial));
+
+      // Update Summary Bar
+      document.getElementById('stat-total-tokens').textContent = totalTokens;
+      document.getElementById('stat-total-cash').textContent = '₹' + totalCash.toLocaleString('en-IN');
+      document.getElementById('stat-red-winners').textContent = `${redTokens.length} Red (${winningTokens.length} ★)`;
+      document.getElementById('stat-grid-type').textContent = `2 × ${rows} (${tokensPerPage} tokens/page)`;
+      const totalPageCount = includeBackside ? (totalFrontSheets * 2 + 1) : (totalFrontSheets + 1);
+      document.getElementById('stat-total-sheets').textContent = `${totalPageCount} Pages (${includeBackside ? 'Front + Back + Cheat Sheet' : 'Front + Cheat Sheet'})`;
+      document.getElementById('stat-spare-slots').textContent = spareSlots;
+
+      const container = document.getElementById('print-container');
+      container.innerHTML = '';
+
+      if (totalTokens === 0) {
+        container.innerHTML = '<div class="py-16 text-zinc-500 font-bold">Set at least one food item quota above zero to generate tokens.</div>';
+        return;
+      }
+
+      const nehruSrc = customNehruImg || NEHRU_IMAGE_PATH;
+      const nehruMarkup = `<img src="${nehruSrc}" alt="Pandit Jawaharlal Nehru"/>`;
+
+      for (let sIdx = 0; sIdx < totalFrontSheets; sIdx++) {
+        const pageTokens = shuffledTokens.slice(sIdx * tokensPerPage, (sIdx + 1) * tokensPerPage);
+
+        // ==========================================
+        // 1. FRONT SHEET GENERATION
+        // ==========================================
+        const metaBarFront = document.createElement('div');
+        metaBarFront.className = 'sheet-meta-bar text-xs font-bold text-zinc-400 uppercase tracking-wider -mb-4 mt-2';
+        metaBarFront.innerHTML = `Sheet ${sIdx + 1} (FRONT) — <span class="text-yellow-400">Classic Sunflower (#FFD700) Food Tokens</span>`;
+        container.appendChild(metaBarFront);
+
+        const sheetFront = document.createElement('div');
+        sheetFront.className = 'a4-sheet';
+
+        for (let slot = 0; slot < tokensPerPage; slot++) {
+          const t = pageTokens[slot];
+          const card = document.createElement('div');
+
+          if (t) {
+            card.className = 'token-card';
+            const cachedEntry = bitmapWatermarkCache[t.id];
+            const watermarkMarkup = cachedEntry
+              ? `<img src="${cachedEntry.dataUrl}" alt="${t.name}"/>`
+              : (t.customImg ? `<img src="${t.customImg}" alt="${t.name}"/>` : FOOD_SVGS[t.svgKey]);
+
+            const idColor = t.isRed ? '#dc2626' : '#291502';
+            const starHtml = t.isWinner ? '<span class="secret-star" title="Secret Instant Winner">★</span>' : '';
+            const validLabel = t.isRed ? 'VALID: 14 NOV &bull; SINGLE USE' : 'VALID: 14 NOV';
+
+            card.innerHTML = `
+              <div class="token-inner-frame">
+                <div class="token-watermark">${watermarkMarkup}</div>
+                <div class="token-header">
+                  <span class="house-badge">★ YELLOW HOUSE</span>
+                  <span class="event-pill">14 NOV FAIR</span>
+                </div>
+                <div class="token-body">
+                  <div class="food-title">${t.name}</div>
+                  <div class="price-figure">₹${t.price}</div>
+                  <div class="price-words">${t.words}</div>
+                </div>
+                <div class="token-footer">
+                  <span style="color:${idColor}">ID: ${t.serial}${starHtml}</span>
+                  <span>${validLabel}</span>
+                </div>
+              </div>
+            `;
+          } else {
+            card.className = 'token-card token-empty';
+            card.textContent = 'Spare / Blank Token Slot';
+          }
+          sheetFront.appendChild(card);
+        }
+        container.appendChild(sheetFront);
+
+        // ==========================================
+        // 2. MIRRORED BACK SHEET GENERATION (Nehru Portrait + Dynamic ID)
+        // ==========================================
+        if (includeBackside) {
+          const metaBarBack = document.createElement('div');
+          metaBarBack.className = 'sheet-meta-bar text-xs font-bold text-zinc-400 uppercase tracking-wider -mb-4 mt-2';
+          metaBarBack.innerHTML = `Sheet ${sIdx + 1} (BACK - MIRRORED FOR DUPLEX FLIP) — <span class="text-amber-200">3D Pandit Jawaharlal Nehru &amp; Dynamic ID</span>`;
+          container.appendChild(metaBarBack);
+
+          const sheetBack = document.createElement('div');
+          sheetBack.className = 'a4-sheet';
+
+          for (let slot = 0; slot < tokensPerPage; slot++) {
+            // Horizontal column swap so Left-Front aligns with Right-Back when paper is flipped
+            const col = slot % 2;
+            const row = Math.floor(slot / 2);
+            const mirroredCol = 1 - col;
+            const mirroredSlot = (row * 2) + mirroredCol;
+
+            const t = pageTokens[mirroredSlot];
+            const card = document.createElement('div');
+
+            if (t) {
+              card.className = 'token-card-back';
+              const idColor = t.isRed ? '#dc2626' : '#1c1917';
+              const starHtml = t.isWinner ? '<span class="secret-star">★</span>' : '';
+              const factHtml = (t.isRed && t.nehruFact)
+                ? `<div class="back-nehru-fact" title="${t.nehruFact}">★ ${t.nehruFact}</div>`
+                : '';
+
+              card.innerHTML = `
+                <div class="token-back-inner">
+                  <div class="back-split-top">
+                    <div class="back-tribute-left">
+                      <div class="tribute-tag">HAPPY CHILDREN'S DAY</div>
+                      <div class="tribute-sub">HONORING THE BIRTH ANNIVERSARY OF</div>
+                      <div class="tribute-name">PANDIT JAWAHARLAL NEHRU</div>
+                      <div class="tribute-dates">14 NOVEMBER 1889 – 27 MAY 1964</div>
+                    </div>
+                    <div class="token-back-portrait">${nehruMarkup}</div>
+                  </div>
+                  <div class="back-bottom-bar">
+                    <div class="back-id-pill" style="color:${idColor}">ID: ${t.serial}${starHtml}</div>
+                    ${factHtml}
+                  </div>
+                </div>
+              `;
+            } else {
+              card.className = 'token-card-back token-empty';
+              card.textContent = 'Spare (Back)';
+            }
+            sheetBack.appendChild(card);
+          }
+          container.appendChild(sheetBack);
+        }
+      }
+
+      // ==========================================
+      // 3. MASTER WINNER CHEAT SHEET (FINAL PAGE)
+      // ==========================================
+      const cheatBar = document.createElement('div');
+      cheatBar.className = 'sheet-meta-bar text-xs font-bold text-rose-400 uppercase tracking-wider -mb-4 mt-4';
+      cheatBar.innerHTML = `Final Sheet — Stall Master Cheat Sheet (20 Secret ★ Red-ID Winners out of 50 Red IDs)`;
+      container.appendChild(cheatBar);
+
+      const cheatSheet = document.createElement('div');
+      cheatSheet.className = 'a4-cheat-sheet p-12';
+      cheatSheet.innerHTML = `
+        <div class="border-4 border-[#78350f] rounded-2xl p-8 h-full flex flex-col justify-between bg-amber-50/40">
+          <div>
+            <div class="text-center border-b-4 border-[#78350f] pb-4 mb-6">
+              <div class="text-xs font-black uppercase tracking-widest text-[#92400e] mb-1">CONFIDENTIAL STALL VERIFICATION LIST &bull; 14 NOV FAIR</div>
+              <h1 class="text-3xl font-black text-[#451a03]">★ YELLOW HOUSE MASTER WINNER CHEAT SHEET ★</h1>
+              <p class="text-sm font-bold text-red-700 mt-2">
+                50 tokens have a Crimson Red ID &amp; a unique Chacha Nehru Fact, but <b>ONLY THESE ${winningTokens.length} SECRET ★ RED IDs</b> win the instant bonus gift!
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              ${winningTokens.map((w, idx) => `
+                <div class="flex flex-col justify-between bg-white border-2 border-red-600 rounded-xl px-3.5 py-2 shadow-sm">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="w-5 h-5 rounded-full bg-red-600 text-white text-[11px] font-black flex items-center justify-center">${idx + 1}</span>
+                      <span class="text-base font-black text-red-700 tracking-wide">${w.serial} <span class="text-amber-500">★</span></span>
+                    </div>
+                    <span class="text-[11px] font-extrabold text-zinc-600 uppercase">${w.name} (₹${w.price})</span>
+                  </div>
+                  <div class="text-[9.5px] font-bold text-red-900/90 leading-snug mt-1 border-t border-red-100 pt-1">${w.nehruFact || ''}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="border-t-2 border-dashed border-[#92400e] pt-4 text-xs font-bold text-[#78350f] flex justify-between items-center">
+            <span>Verification Tip: Look for the tiny gold star (★) printed right after the Red ID on both Front &amp; Back.</span>
+            <span>Total Tokens: ${totalTokens}</span>
+          </div>
+        </div>
+      `;
+      container.appendChild(cheatSheet);
+    }
+
+    // Helper: Convert Base64 Data URL to Uint8Array for docx ImageRun
+    function dataURLToUint8Array(dataURL) {
+      const base64 = dataURL.split(',')[1];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    // Helper: Draw a rounded rectangle path on a 2D canvas context
+    function roundRectPath(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    // =========================================================
+    // BLAZING-FAST 2D CANVAS SNAPSHOT ENGINE (FRONT + MIRRORED BACK + CHEAT SHEET)
+    // Reads live CSS slider properties directly so PDF & DOCX match screen preview 1:1
+    // =========================================================
+    async function renderAllSheetsToSnapshots(onProgress) {
+      await ensureWatermarksCached();
+
+      const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
+      const includeBackside = document.getElementById('toggle-backside').checked;
+      const rows = tokensPerPage / 2;
+      const wmOpacity = (parseInt(document.getElementById('watermark-opacity').value, 10) || 35) / 100;
+
+      applyGridScalingCSS(tokensPerPage);
+
+      const rootStyle = getComputedStyle(document.documentElement);
+      const parseCSSVal = (propName, fallback) => {
+        const val = parseFloat(rootStyle.getPropertyValue(propName));
+        return Number.isFinite(val) ? val : fallback;
+      };
+
+      const itemPt   = parseCSSVal('--item-font-size', 17);
+      const pricePt  = parseCSSVal('--price-font-size', 31);
+      const wordsPt  = parseCSSVal('--words-font-size', 10.5);
+      const housePt  = parseCSSVal('--corner-house-size', 14.5);
+      const pillPt   = parseCSSVal('--corner-pill-size', 12);
+      const footerPt = parseCSSVal('--corner-footer-size', 12);
+      const backIdPt = parseCSSVal('--back-id-size', 19);
+      const padVMm   = parseCSSVal('--pad-v', 2.8);
+      const wmSizeMm = parseCSSVal('--wm-size', 64);
+
+      const SHEET_W = 1588;
+      const SHEET_H = 2246;
+      const CARD_W = SHEET_W / 2;
+      const CARD_H = SHEET_H / rows;
+
+      const MM_TO_PX = SHEET_W / 210;
+      const PT_TO_PX = (96 / 72) * 2;
+
+      const houseFontPx  = Math.round(housePt * PT_TO_PX);
+      const badgeFontPx  = Math.round(pillPt * PT_TO_PX);
+      const footerFontPx = Math.round(footerPt * PT_TO_PX);
+      const titleFontPx  = Math.round(itemPt * PT_TO_PX);
+      const priceFontPx  = Math.round(pricePt * PT_TO_PX);
+      const wordsFontPx  = Math.round(wordsPt * PT_TO_PX);
+      const backIdPx     = Math.round(backIdPt * PT_TO_PX);
+      const wmSizePx     = Math.round(wmSizeMm * MM_TO_PX);
+
+      const inset = Math.round(2 * MM_TO_PX);
+      const padX  = inset + Math.round(4.2 * MM_TO_PX);
+      const padV  = Math.round(padVMm * MM_TO_PX);
+
+      // Step 1: Pre-render 1 reusable base template canvas per unique food item
+      const baseTemplates = {};
+      menuState.forEach(item => {
+        const tpl = document.createElement('canvas');
+        tpl.width = CARD_W;
+        tpl.height = Math.round(CARD_H);
+        const ctx = tpl.getContext('2d');
+        const H = tpl.height;
+
+        const grad = ctx.createRadialGradient(CARD_W * 0.5, H * 0.48, 20, CARD_W * 0.5, H * 0.5, Math.max(CARD_W, H) * 0.65);
+        grad.addColorStop(0, '#fff176');
+        grad.addColorStop(0.58, '#FFD700');
+        grad.addColorStop(1, '#f5b700');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, CARD_W, H);
+
+        ctx.save();
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.strokeRect(1, 1, CARD_W - 2, H - 2);
+        ctx.restore();
+
+        const frameW = CARD_W - inset * 2;
+        const frameH = H - inset * 2;
+        ctx.save();
+        roundRectPath(ctx, inset, inset, frameW, frameH, 10);
+        ctx.strokeStyle = 'rgba(146, 64, 14, 0.52)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.clip();
+
+        const cached = bitmapWatermarkCache[item.id];
+        if (cached && cached.canvas) {
+          ctx.save();
+          ctx.globalAlpha = wmOpacity;
+          ctx.drawImage(
+            cached.canvas,
+            (CARD_W - wmSizePx) / 2,
+            (H * 0.52) - (wmSizePx / 2),
+            wmSizePx,
+            wmSizePx
+          );
+          ctx.restore();
+        }
+        ctx.restore();
+
+        const headerTopY = inset + padV;
+        const badgeH = Math.round(badgeFontPx * 1.15 + 7);
+        const headerContentH = Math.max(Math.round(houseFontPx * 1.15), badgeH);
+        const headerCenterY = headerTopY + headerContentH / 2;
+        const headerBottomY = headerTopY + headerContentH + Math.round(1.2 * MM_TO_PX);
+
+        ctx.save();
+        ctx.font = `900 ${houseFontPx}px "Segoe UI", system-ui, sans-serif`;
+        ctx.fillStyle = '#451a03';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★ YELLOW HOUSE', padX, headerCenterY);
+
+        const badgeText = '14 NOV FAIR';
+        ctx.font = `900 ${badgeFontPx}px "Segoe UI", system-ui, sans-serif`;
+        const badgeMetrics = ctx.measureText(badgeText);
+        const badgeW = badgeMetrics.width + 28;
+        const badgeX = CARD_W - padX - badgeW;
+        const badgeY = headerCenterY - badgeH / 2;
+
+        roundRectPath(ctx, badgeX, badgeY, badgeW, badgeH, 7);
+        ctx.fillStyle = '#78350f';
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2 + 1);
+
+        ctx.beginPath();
+        ctx.moveTo(padX, headerBottomY);
+        ctx.lineTo(CARD_W - padX, headerBottomY);
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+
+        const footerBottomY = H - inset - padV;
+        const footerContentH = Math.round(footerFontPx * 1.15);
+        const footerTextY = footerBottomY - footerContentH / 2;
+        const footerTopY = footerBottomY - footerContentH - Math.round(1.2 * MM_TO_PX);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([7, 5]);
+        ctx.moveTo(padX, footerTopY);
+        ctx.lineTo(CARD_W - padX, footerTopY);
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 2.6;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // Dynamically Centered Foreground Body (White Pill Title + ₹ Price + Words)
+        const availTop = headerBottomY;
+        const availBottom = footerTopY;
+        const availH = Math.max(40, availBottom - availTop);
+
+        const pillPadV = Math.round(1.0 * MM_TO_PX);
+        const pillPadH = Math.round(3.8 * MM_TO_PX);
+        const pillH = Math.round(titleFontPx * 1.1) + pillPadV * 2;
+        const gapTitleToPrice = Math.round(0.8 * MM_TO_PX);
+        const priceH = Math.round(priceFontPx * 0.96);
+        const gapPriceToWords = Math.round(0.7 * MM_TO_PX);
+        const wordsH = Math.round(wordsFontPx * 1.1);
+
+        const totalStackH = pillH + gapTitleToPrice + priceH + gapPriceToWords + wordsH;
+        const stackStartY = availTop + (availH - totalStackH) / 2;
+
+        ctx.save();
+        const titleText = item.name.toUpperCase();
+        ctx.font = `900 ${titleFontPx}px "Segoe UI", system-ui, sans-serif`;
+        const titleW = ctx.measureText(titleText).width;
+        const pillW = titleW + pillPadH * 2;
+        const pillX = (CARD_W - pillW) / 2;
+        const pillY = stackStartY;
+
+        roundRectPath(ctx, pillX, pillY, pillW, pillH, 8);
+        ctx.fillStyle = 'rgba(255, 253, 240, 0.9)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(146, 64, 14, 0.42)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#111111';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(titleText, CARD_W / 2, pillY + pillH / 2 + 1);
+
+        // ₹ Price Figure with crisp white outline
+        const priceText = `₹${item.price}`;
+        const priceCenterY = pillY + pillH + gapTitleToPrice + priceH / 2;
+        ctx.font = `900 ${priceFontPx}px "Segoe UI", system-ui, sans-serif`;
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 7;
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeText(priceText, CARD_W / 2, priceCenterY);
+        ctx.fillStyle = '#78350f';
+        ctx.fillText(priceText, CARD_W / 2, priceCenterY);
+
+        // Amount in Words
+        const wordsCenterY = pillY + pillH + gapTitleToPrice + priceH + gapPriceToWords + wordsH / 2;
+        ctx.font = `900 ${wordsFontPx}px "Segoe UI", system-ui, sans-serif`;
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+        ctx.strokeText(item.words, CARD_W / 2, wordsCenterY);
+        ctx.fillStyle = '#1c1917';
+        ctx.fillText(item.words, CARD_W / 2, wordsCenterY);
+        ctx.restore();
+
+        baseTemplates[item.id] = {
+          canvas: tpl,
+          padX,
+          footerTextY,
+          footerFontPx
+        };
+      });
+      // Step 2: Pre-render Back-Side Split Layout Base Template (Pale Yellow + Left Tribute Text + Right Uncropped Nehru Photo)
+      const backTpl = document.createElement('canvas');
+      backTpl.width = CARD_W;
+      backTpl.height = Math.round(CARD_H);
+      const bctx = backTpl.getContext('2d');
+      const BH = backTpl.height;
+
+      const bGrad = bctx.createRadialGradient(CARD_W * 0.6, BH * 0.45, 20, CARD_W * 0.5, BH * 0.5, Math.max(CARD_W, BH) * 0.65);
+      bGrad.addColorStop(0, '#fffef0');
+      bGrad.addColorStop(0.65, '#fef9c3');
+      bGrad.addColorStop(1, '#fde047');
+      bctx.fillStyle = bGrad;
+      bctx.fillRect(0, 0, CARD_W, BH);
+
+      bctx.save();
+      bctx.strokeStyle = '#b45309';
+      bctx.lineWidth = 2;
+      bctx.setLineDash([8, 6]);
+      bctx.strokeRect(1, 1, CARD_W - 2, BH - 2);
+      bctx.restore();
+
+      bctx.save();
+      roundRectPath(bctx, inset, inset, CARD_W - inset * 2, BH - inset * 2, 10);
+      bctx.strokeStyle = 'rgba(146, 64, 14, 0.45)';
+      bctx.lineWidth = 2;
+      bctx.stroke();
+      bctx.clip();
+
+      const pillBlockH = Math.round(backIdPx * 1.05) + Math.round(1.0 * MM_TO_PX);
+      const factLineSingleH = Math.round(wordsFontPx * 0.62 * 1.2);
+      const factBoxH = factLineSingleH * 2 + Math.round(1.2 * MM_TO_PX);
+      const bottomZoneH = pillBlockH + factBoxH + Math.round(2.4 * MM_TO_PX);
+      const dividerY = BH - inset - bottomZoneH;
+
+      // Dashed divider above bottom-center ID bar
+      bctx.save();
+      bctx.beginPath();
+      bctx.setLineDash([6, 4]);
+      bctx.moveTo(padX, dividerY);
+      bctx.lineTo(CARD_W - padX, dividerY);
+      bctx.strokeStyle = 'rgba(146, 64, 14, 0.45)';
+      bctx.lineWidth = 2;
+      bctx.stroke();
+      bctx.restore();
+
+      // Upper Split Area: Left Tribute Text + Right Full Seamless Photo
+      const topAreaTop = inset + padV;
+      const topAreaH = Math.max(60, dividerY - topAreaTop);
+      const topMidY = topAreaTop + topAreaH / 2;
+
+      const portraitH = Math.min(Math.round(wmSizePx * 0.62), Math.round(topAreaH * 0.98));
+      const portraitW = Math.round(portraitH * 1.1);
+      const portraitX = CARD_W - padX - portraitW + Math.round(1.5 * MM_TO_PX);
+      const portraitY = topMidY - portraitH / 2;
+
+      const nCache = bitmapWatermarkCache['nehru'];
+      if (nCache && nCache.canvas) {
+        bctx.save();
+        bctx.globalCompositeOperation = 'multiply';
+        bctx.drawImage(nCache.canvas, portraitX, portraitY, portraitW, portraitH);
+        bctx.restore();
+      }
+
+      // Left Tribute Typography matching uploaded reference poster (Stacked multi-line so it never overlaps the right portrait)
+      const leftX = padX;
+      const fTag = Math.round(badgeFontPx * 0.82);
+      const fSub = Math.round(wordsFontPx * 0.65);
+      const fName = Math.round(titleFontPx * 0.66);
+      const fDate = Math.round(wordsFontPx * 0.62);
+
+      const subLead = Math.round(fSub * 1.15);
+      const nameLead = Math.round(fName * 1.08);
+      const secGap = Math.round(1.1 * MM_TO_PX);
+
+      const textBlockH = fTag + secGap + (subLead * 2) + secGap + (nameLead * 3) + secGap + fDate;
+      let curTextY = topMidY - textBlockH / 2;
+
+      bctx.textAlign = 'left';
+      bctx.textBaseline = 'top';
+
+      // Line 1: HAPPY CHILDREN'S DAY
+      bctx.font = `900 ${fTag}px "Segoe UI", system-ui, sans-serif`;
+      bctx.fillStyle = '#0f172a';
+      bctx.fillText("HAPPY CHILDREN'S DAY", leftX, curTextY);
+      curTextY += fTag + secGap;
+
+      // Lines 2–3: HONORING THE BIRTH / ANNIVERSARY OF
+      bctx.font = `800 ${fSub}px "Segoe UI", system-ui, sans-serif`;
+      bctx.fillStyle = '#57534e';
+      bctx.fillText('HONORING THE BIRTH', leftX, curTextY);
+      curTextY += subLead;
+      bctx.fillText('ANNIVERSARY OF', leftX, curTextY);
+      curTextY += subLead + secGap;
+
+      // Lines 4–6: PANDIT / JAWAHARLAL / NEHRU
+      bctx.font = `900 ${fName}px Georgia, "Times New Roman", serif`;
+      bctx.fillStyle = '#9a3412';
+      bctx.fillText('PANDIT', leftX, curTextY);
+      curTextY += nameLead;
+      bctx.fillText('JAWAHARLAL', leftX, curTextY);
+      curTextY += nameLead;
+      bctx.fillText('NEHRU', leftX, curTextY);
+      curTextY += nameLead + secGap;
+
+      // Line 7: 14 NOVEMBER 1889 – 27 MAY 1964
+      bctx.font = `700 ${fDate}px "Segoe UI", system-ui, sans-serif`;
+      bctx.fillStyle = '#78716c';
+      bctx.fillText('14 NOVEMBER 1889 – 27 MAY 1964', leftX, curTextY);
+
+      bctx.restore();
+
+      const backIdCenterY = dividerY + Math.round(0.9 * MM_TO_PX) + pillBlockH / 2;
+      const backFactTopY = dividerY + Math.round(1.3 * MM_TO_PX) + pillBlockH;
+
+      // Helper: Wrap full text cleanly into lines without ever adding "..."
+      function wrapFullTextLines(ctx, text, maxWidth) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = words[0] || '';
+        for (let i = 1; i < words.length; i++) {
+          const testLine = currentLine + ' ' + words[i];
+          if (ctx.measureText(testLine).width <= maxWidth) {
+            currentLine = testLine;
+          } else {
+            lines.push(currentLine);
+            currentLine = words[i];
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        return lines;
+      }
+
+      // Step 3: Composite all A4 pages in fast asynchronous batches
+      const totalTokens = shuffledTokens.length;
+      const totalFrontSheets = Math.ceil(totalTokens / tokensPerPage);
+      const pageSnapshots = [];
+
+      const sheetCanvas = document.createElement('canvas');
+      sheetCanvas.width = SHEET_W;
+      sheetCanvas.height = SHEET_H;
+      const sctx = sheetCanvas.getContext('2d');
+
+      for (let sIdx = 0; sIdx < totalFrontSheets; sIdx++) {
+        const pageTokens = shuffledTokens.slice(sIdx * tokensPerPage, (sIdx + 1) * tokensPerPage);
+
+        // Render Front Page
+        sctx.fillStyle = '#ffffff';
+        sctx.fillRect(0, 0, SHEET_W, SHEET_H);
+
+        for (let slot = 0; slot < tokensPerPage; slot++) {
+          const col = slot % 2;
+          const row = Math.floor(slot / 2);
+          const x = col * CARD_W;
+          const y = Math.round(row * CARD_H);
+          const t = pageTokens[slot];
+
+          if (t && baseTemplates[t.id]) {
+            const tplInfo = baseTemplates[t.id];
+            sctx.drawImage(tplInfo.canvas, x, y);
+
+            sctx.save();
+            sctx.font = `900 ${tplInfo.footerFontPx}px "Segoe UI", system-ui, sans-serif`;
+            sctx.fillStyle = t.isRed ? '#dc2626' : '#291502';
+            sctx.textAlign = 'left';
+            sctx.textBaseline = 'middle';
+            const printText = `ID: ${t.serial}`;
+            sctx.fillText(printText, x + tplInfo.padX, y + tplInfo.footerTextY);
+
+            if (t.isWinner) {
+              const txtW = sctx.measureText(printText).width;
+              sctx.fillStyle = '#d97706';
+              sctx.fillText(' ★', x + tplInfo.padX + txtW, y + tplInfo.footerTextY);
+            }
+
+            // Right footer label: only include "• SINGLE USE" on Red-ID tokens
+            const validFooterText = t.isRed ? 'VALID: 14 NOV • SINGLE USE' : 'VALID: 14 NOV';
+            sctx.fillStyle = '#291502';
+            sctx.textAlign = 'right';
+            sctx.textBaseline = 'middle';
+            sctx.fillText(validFooterText, x + CARD_W - tplInfo.padX, y + tplInfo.footerTextY);
+            sctx.restore();
+          } else {
+            sctx.fillStyle = '#fff9c4';
+            sctx.fillRect(x, y, CARD_W, Math.round(CARD_H));
+            sctx.strokeStyle = '#b45309';
+            sctx.strokeRect(x + 2, y + 2, CARD_W - 4, Math.round(CARD_H) - 4);
+          }
+        }
+        pageSnapshots.push(sheetCanvas.toDataURL('image/jpeg', 0.94));
+
+        // Render Mirrored Back Page if enabled
+        if (includeBackside) {
+          sctx.fillStyle = '#ffffff';
+          sctx.fillRect(0, 0, SHEET_W, SHEET_H);
+
+          for (let slot = 0; slot < tokensPerPage; slot++) {
+            const col = slot % 2;
+            const row = Math.floor(slot / 2);
+            const mirroredCol = 1 - col;
+            const mirroredSlot = (row * 2) + mirroredCol;
+
+            const x = col * CARD_W;
+            const y = Math.round(row * CARD_H);
+            const t = pageTokens[mirroredSlot];
+
+            if (t) {
+              sctx.drawImage(backTpl, x, y);
+
+              sctx.save();
+              sctx.font = `900 ${backIdPx}px "Segoe UI", system-ui, sans-serif`;
+              const idStr = `ID: ${t.serial}${t.isWinner ? ' ★' : ''}`;
+              const idW = sctx.measureText(idStr).width;
+              const bPillW = idW + Math.round(7 * MM_TO_PX);
+              const bPillH = pillBlockH;
+              const bPillX = x + (CARD_W - bPillW) / 2;
+              const bPillY = y + backIdCenterY - bPillH / 2;
+
+              roundRectPath(sctx, bPillX, bPillY, bPillW, bPillH, 8);
+              sctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+              sctx.fill();
+              sctx.strokeStyle = 'rgba(146, 64, 14, 0.48)';
+              sctx.lineWidth = 2;
+              sctx.stroke();
+
+              const baseIdText = `ID: ${t.serial}`;
+              sctx.fillStyle = t.isRed ? '#dc2626' : '#1c1917';
+              sctx.textAlign = 'center';
+              sctx.textBaseline = 'middle';
+              sctx.fillText(baseIdText, x + CARD_W / 2 - (t.isWinner ? Math.round(backIdPx * 0.45) : 0), y + backIdCenterY + 1);
+
+              if (t.isWinner) {
+                const baseW = sctx.measureText(baseIdText).width;
+                sctx.fillStyle = '#d97706';
+                sctx.textAlign = 'left';
+                sctx.fillText(' ★', x + CARD_W / 2 - Math.round(backIdPx * 0.45) + baseW / 2, y + backIdCenterY + 1);
+              }
+
+              // Render the FULL, UNTRUNCATED Pandit Jawaharlal Nehru fact on Red ID tokens (Multi-line wrap, zero "...")
+              if (t.isRed && t.nehruFact) {
+                const maxFactBoxW = CARD_W - padX * 1.3;
+                let factFontPx = Math.max(11, Math.round(wordsFontPx * 0.62));
+                sctx.font = `800 ${factFontPx}px "Segoe UI", system-ui, sans-serif`;
+                const fullFactText = `★ ${t.nehruFact}`;
+
+                let wrappedLines = wrapFullTextLines(sctx, fullFactText, maxFactBoxW - 20);
+                if (wrappedLines.length > 2 && factFontPx > 10) {
+                  factFontPx = Math.max(10, Math.round(factFontPx * 0.88));
+                  sctx.font = `800 ${factFontPx}px "Segoe UI", system-ui, sans-serif`;
+                  wrappedLines = wrapFullTextLines(sctx, fullFactText, maxFactBoxW - 20);
+                }
+
+                const lineStep = Math.round(factFontPx * 1.18);
+                const dynamicBoxH = wrappedLines.length * lineStep + 10;
+                const boxX = x + (CARD_W - maxFactBoxW) / 2;
+                const boxY = y + backFactTopY;
+
+                roundRectPath(sctx, boxX, boxY, maxFactBoxW, dynamicBoxH, 6);
+                sctx.fillStyle = 'rgba(254, 226, 226, 0.94)';
+                sctx.fill();
+                sctx.strokeStyle = 'rgba(220, 38, 38, 0.42)';
+                sctx.lineWidth = 1.5;
+                sctx.stroke();
+
+                sctx.fillStyle = '#991b1b';
+                sctx.textAlign = 'center';
+                sctx.textBaseline = 'middle';
+                wrappedLines.forEach((ln, lIdx) => {
+                  const lineY = boxY + 6 + lIdx * lineStep + lineStep / 2;
+                  sctx.fillText(ln, x + CARD_W / 2, lineY);
+                });
+              }
+              sctx.restore();
+            } else {
+              sctx.fillStyle = '#f4f4f5';
+              sctx.fillRect(x, y, CARD_W, Math.round(CARD_H));
+              sctx.strokeStyle = '#71717a';
+              sctx.strokeRect(x + 2, y + 2, CARD_W - 4, Math.round(CARD_H) - 4);
+            }
+          }
+          pageSnapshots.push(sheetCanvas.toDataURL('image/jpeg', 0.94));
+        }
+
+        const pct = Math.round(((sIdx + 1) / totalFrontSheets) * 100);
+        if (onProgress) onProgress(sIdx + 1, totalFrontSheets, pct);
+
+        if (sIdx % 3 === 0) {
+          await new Promise(r => setTimeout(r, 15));
+        }
+      }
+
+      // Step 4: Render Final Master Winner Cheat Sheet Page
+      sctx.fillStyle = '#ffffff';
+      sctx.fillRect(0, 0, SHEET_W, SHEET_H);
+
+      sctx.strokeStyle = '#78350f';
+      sctx.lineWidth = 6;
+      roundRectPath(sctx, 70, 70, SHEET_W - 140, SHEET_H - 140, 24);
+      sctx.stroke();
+
+      sctx.font = `900 ${Math.round(24 * PT_TO_PX)}px "Segoe UI", system-ui, sans-serif`;
+      sctx.fillStyle = '#451a03';
+      sctx.textAlign = 'center';
+      sctx.fillText('★ YELLOW HOUSE MASTER WINNER CHEAT SHEET ★', SHEET_W / 2, 175);
+
+      sctx.font = `700 ${Math.round(12.5 * PT_TO_PX)}px "Segoe UI", system-ui, sans-serif`;
+      sctx.fillStyle = '#dc2626';
+      sctx.fillText('Keep at the stall! Out of 50 Red IDs, ONLY these 20 Secret ★ Red IDs win instant bonus gifts:', SHEET_W / 2, 240);
+
+      const winningTokens = shuffledTokens.filter(t => t.isWinner).sort((a, b) => a.serial.localeCompare(b.serial));
+      const boxW = 640;
+      const boxH = 130;
+
+      winningTokens.forEach((w, idx) => {
+        const colIdx = idx % 2;
+        const rowIdx = Math.floor(idx / 2);
+        const bx = colIdx === 0 ? 120 : SHEET_W - 120 - boxW;
+        const by = 310 + rowIdx * 165;
+
+        roundRectPath(sctx, bx, by, boxW, boxH, 14);
+        sctx.fillStyle = '#fef2f2';
+        sctx.fill();
+        sctx.strokeStyle = '#dc2626';
+        sctx.lineWidth = 3;
+        sctx.stroke();
+
+        sctx.font = `900 ${Math.round(16 * PT_TO_PX)}px "Segoe UI", system-ui, sans-serif`;
+        sctx.fillStyle = '#b91c1c';
+        sctx.textAlign = 'left';
+        sctx.textBaseline = 'middle';
+        sctx.fillText(`#${idx + 1}  ${w.serial} ★`, bx + 24, by + 38);
+
+        sctx.font = `800 ${Math.round(11 * PT_TO_PX)}px "Segoe UI", system-ui, sans-serif`;
+        sctx.fillStyle = '#57534e';
+        sctx.textAlign = 'right';
+        sctx.fillText(`${w.name} (₹${w.price})`, bx + boxW - 24, by + 38);
+
+        if (w.nehruFact) {
+          sctx.font = `700 ${Math.round(8.5 * PT_TO_PX)}px "Segoe UI", system-ui, sans-serif`;
+          sctx.fillStyle = '#7f1d1d';
+          sctx.textAlign = 'left';
+          const cheatLines = wrapFullTextLines(sctx, w.nehruFact, boxW - 48);
+          cheatLines.slice(0, 2).forEach((cl, cIdx) => {
+            sctx.fillText(cl, bx + 24, by + 76 + cIdx * 26);
+          });
+        }
+      });
+
+      pageSnapshots.push(sheetCanvas.toDataURL('image/jpeg', 0.94));
+      return pageSnapshots;
+    }
+
+    // Fast High-Resolution PDF Export (.pdf)
+    document.getElementById('btn-pdf').addEventListener('click', async () => {
+      if (!shuffledTokens.length) return;
+
+      const statusBox = document.getElementById('export-status');
+      const statusText = document.getElementById('export-status-text');
+      const statusPct = document.getElementById('export-status-pct');
+      const progressBar = document.getElementById('export-progress-bar');
+      statusBox.classList.remove('hidden');
+      progressBar.style.width = '0%';
+
+      try {
+        const snapshots = await renderAllSheetsToSnapshots((curr, total, pct) => {
+          statusText.textContent = `Fast PDF Engine: Compositing Token Set ${curr} of ${total}...`;
+          statusPct.textContent = `${pct}%`;
+          progressBar.style.width = `${pct}%`;
+        });
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        snapshots.forEach((imgData, idx) => {
+          if (idx > 0) pdf.addPage('a4', 'portrait');
+          pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+        });
+
+        pdf.save('Yellow_House_400_Food_Tokens_14Nov.pdf');
+      } catch (err) {
+        console.error('PDF export error:', err);
+      } finally {
+        statusBox.classList.add('hidden');
+      }
+    });
+
+    // Fast Zero-Drift Canvas Snapshot DOCX Export (.docx)
+    document.getElementById('btn-docx').addEventListener('click', async () => {
+      if (!shuffledTokens.length) return;
+
+      const statusBox = document.getElementById('export-status');
+      const statusText = document.getElementById('export-status-text');
+      const statusPct = document.getElementById('export-status-pct');
+      const progressBar = document.getElementById('export-progress-bar');
+      statusBox.classList.remove('hidden');
+      progressBar.style.width = '0%';
+
+      try {
+        const snapshots = await renderAllSheetsToSnapshots((curr, total, pct) => {
+          statusText.textContent = `Fast DOCX Snapshot Engine: Compositing Token Set ${curr} of ${total}...`;
+          statusPct.textContent = `${pct}%`;
+          progressBar.style.width = `${pct}%`;
+        });
+
+        statusText.textContent = 'Packaging locked A4 snapshots into Word (.docx)...';
+
+        const { Document, Packer, Paragraph, ImageRun } = window.docx;
+
+        const docSections = snapshots.map((imgData) => ({
+          properties: {
+            page: {
+              size: { width: 11906, height: 16838 },
+              margin: { top: 0, right: 0, bottom: 0, left: 0 }
+            }
+          },
+          children: [
+            new Paragraph({
+              spacing: { before: 0, after: 0, line: 240 },
+              children: [
+                new ImageRun({
+                  data: dataURLToUint8Array(imgData),
+                  transformation: {
+                    width: 794,
+                    height: 1123
+                  }
+                })
+              ]
+            })
+          ]
+        }));
+
+        const doc = new Document({ sections: docSections });
+        const blob = await Packer.toBlob(doc);
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Yellow_House_400_Food_Tokens_14Nov.docx';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (err) {
+        console.error('DOCX export error:', err);
+      } finally {
+        statusBox.classList.add('hidden');
+      }
+    });
+
+    // Bind Top Control Bar Events
+    document.getElementById('btn-shuffle').addEventListener('click', rebuildAndShuffleTokens);
+    document.getElementById('btn-print').addEventListener('click', () => window.print());
+    document.getElementById('toggle-backside').addEventListener('change', renderSheets);
+
+    // Unified Handler for Loading & Persisting images_3.jpg Photo
+    function handleNehruPhotoUpload(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        customNehruImg = evt.target.result;
+        try {
+          localStorage.setItem('yh_nehru_photo_v3', customNehruImg);
+        } catch (err) {}
+        const btnLabel = document.getElementById('nehru-photo-btn-label');
+        if (btnLabel) btnLabel.textContent = '✓ Nehru Photo Loaded';
+        delete bitmapWatermarkCache['nehru'];
+        renderSheets();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    document.getElementById('upload-nehru-photo')?.addEventListener('change', handleNehruPhotoUpload);
+    document.getElementById('upload-nehru-photo-top')?.addEventListener('change', handleNehruPhotoUpload);
+
+    // Anime Rule Poster Modal Handlers
+    document.getElementById('btn-poster').addEventListener('click', () => {
+      document.getElementById('poster-modal').style.display = 'flex';
+    });
+    document.getElementById('close-poster').addEventListener('click', () => {
+      document.getElementById('poster-modal').style.display = 'none';
+      document.body.classList.remove('print-poster');
+    });
+    document.getElementById('print-poster-btn').addEventListener('click', () => {
+      document.body.classList.add('print-poster');
+      window.print();
+      document.body.classList.remove('print-poster');
+    });
+
+    document.getElementById('tokens-per-page').addEventListener('change', renderSheets);
+
+    document.getElementById('watermark-opacity').addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10) || 35;
+      document.getElementById('opacity-label').textContent = `${val}%`;
+      document.documentElement.style.setProperty('--wm-opacity', (val / 100).toFixed(2));
+    });
+
+    // Bind 6 Live Typography & Element Size Sliders
+    function bindTypographySliders() {
+      const sliderConfigs = [
+        { id: 'adj-corner', labelId: 'val-adj-corner', unit: 'pt' },
+        { id: 'adj-title',  labelId: 'val-adj-title',  unit: 'pt' },
+        { id: 'adj-price',  labelId: 'val-adj-price',  unit: 'pt' },
+        { id: 'adj-words',  labelId: 'val-adj-words',  unit: 'pt' },
+        { id: 'adj-wmsize', labelId: 'val-adj-wmsize', unit: 'mm' },
+        { id: 'adj-backid', labelId: 'val-adj-backid', unit: 'pt' }
+      ];
+
+      sliderConfigs.forEach(cfg => {
+        const el = document.getElementById(cfg.id);
+        const lbl = document.getElementById(cfg.labelId);
+        if (!el || !lbl) return;
+
+        el.addEventListener('input', () => {
+          const val = parseFloat(el.value) || 0;
+          const sign = val >= 0 ? '+' : '';
+          lbl.textContent = `${sign}${val}${cfg.unit}`;
+          const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
+          applyGridScalingCSS(tokensPerPage);
+        });
+      });
+
+      document.getElementById('btn-reset-sliders').addEventListener('click', () => {
+        sliderConfigs.forEach(cfg => {
+          const el = document.getElementById(cfg.id);
+          const lbl = document.getElementById(cfg.labelId);
+          if (el && lbl) {
+            el.value = '0';
+            lbl.textContent = `+0${cfg.unit}`;
+          }
+        });
+        const tokensPerPage = parseInt(document.getElementById('tokens-per-page').value, 10) || 10;
+        applyGridScalingCSS(tokensPerPage);
+      });
+    }
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      document.getElementById('tokens-per-page').value = '10';
+      document.getElementById('watermark-opacity').value = '35';
+      document.getElementById('opacity-label').textContent = '35%';
+      document.getElementById('toggle-backside').checked = true;
+      document.documentElement.style.setProperty('--wm-opacity', '0.35');
+      document.getElementById('btn-reset-sliders').click();
+      menuState = DEFAULT_MENU.map(item => ({ ...item, qty: item.defaultQty }));
+      renderMenuControls();
+      rebuildAndShuffleTokens();
+    });
+
+    // Initialize Application
+    window.addEventListener('DOMContentLoaded', () => {
+      if (customNehruImg) {
+        const btnLabel = document.getElementById('nehru-photo-btn-label');
+        if (btnLabel) btnLabel.textContent = '✓ Nehru Photo Loaded';
+      }
+      bindTypographySliders();
+      renderMenuControls();
+      rebuildAndShuffleTokens();
+    });
+  </script>
+</body>
+</html>
